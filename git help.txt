@@ -1,3 +1,0 @@
-inicio:
-
-git clone <link>
