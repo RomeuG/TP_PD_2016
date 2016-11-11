@@ -20,7 +20,7 @@ public class FileServer
     
     public FileServer() {
         // Abrir/ Criar diretório principal do sistema de ficheiros
-        if(CreateDirectory(".", defaultFolder))
+        if (CreateDirectory(".", defaultFolder))
             System.out.println("Root Created");
         
         clientes = new ArrayList<>();
@@ -50,6 +50,7 @@ public class FileServer
         
         // Encerrar todas as Threads a correr
         try {
+            tAtende.setRunning(false);
             tAtende.join();
         } catch (InterruptedException e) {}
         
