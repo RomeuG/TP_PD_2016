@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Observer;
 import java.util.PriorityQueue;
 
-/**
- *
- * @author João
- */
 public class SocketSide extends ThreadFileTranfers 
 {
     private String tcp_ip;

@@ -1,3 +1,5 @@
+import static Communication.Communication.getHostAddress;
+import Communication.TCP;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -12,9 +14,10 @@ import java.util.Scanner;
 public class FileServer 
 {
     public int PORT_TCP = 63000;
+    private String IP_TCP;
     
     private final String defaultFolder = "Storage";
-    private List<ServerSocket> clientes;
+    private List<TCP> clientes;
     
     public FileServer() {
         // Abrir/ Criar diretório principal do sistema de ficheiros
@@ -25,8 +28,9 @@ public class FileServer
     }
     
     /**
-     * This method start a Thread to start accepting clients and reuse the main
-     *  thread to receive commands.
+     * This method start a Thread to start accepting clients and 
+     * a Thread to send a HeartBeat to the Directory Service 
+     * and reuse the main thread to receive commands.
      */
     public void start() {
         AtendeClientes tAtende = null;
@@ -66,6 +70,9 @@ public class FileServer
         return true;
     }
     
+    public synchronized void defineIP_TCP(String ipTCP) {
+        IP_TCP = ipTCP;
+    }
     
     /**
      * Thread -> Accept new clients
@@ -79,6 +86,7 @@ public class FileServer
         public AtendeClientes() throws IOException {
             serverSocket = new ServerSocket(PORT_TCP);
             serverSocket.setSoTimeout(10000);
+            defineIP_TCP(getHostAddress());
             
             clientThreads = new ArrayList<AtendeCliente>();
             running = true;
@@ -95,8 +103,9 @@ public class FileServer
                 while(running) {
                     try {
                         Socket s = serverSocket.accept();
-                        clientes.add(serverSocket);
-                        AtendeCliente atendeCliente = new AtendeCliente(s);
+                        TCP t = new TCP(s);
+                        clientes.add(t);
+                        AtendeCliente atendeCliente = new AtendeCliente(t);
                         clientThreads.add(atendeCliente);
                         atendeCliente.start();
                     } catch (IOException ex) {}
@@ -115,6 +124,9 @@ public class FileServer
             try {
                 serverSocket.close();
             } catch (IOException ex) {}
+            
+            // Warn Directory Service
+            // ...
         }
     }
     
@@ -123,10 +135,10 @@ public class FileServer
      */
     class AtendeCliente extends Thread implements Observer 
     {
-        private Socket socket;
+        private TCP socket;
         private boolean running;
         
-        public AtendeCliente(Socket socket) {
+        public AtendeCliente(TCP socket) {
             this.socket = socket;
             running = true;
         }
@@ -139,48 +151,36 @@ public class FileServer
         public void run() {
             synchronized(running) {
                 while(running) {
-                    ObjectInputStream in = null;
-                    try {
-                        in = new ObjectInputStream(socket.getInputStream());
-                        String message = (String) in.readObject();
-                        String[] splitted = message.split(":");
-                        switch(splitted[0]) {
-                            case "login":
-                                executarComandoLogin(splitted);
-                                break;
-                                
-                            case "logout":
-                                executarComandoLogout(splitted);
-                                break;
-                                
-                            case "registar":
-                                executarComandoRegistar(splitted);
-                                break;
-                                
-                            case "download":
-                                executarComandoDownload(splitted);
-                                break;
-                                
-                            case "upload":
-                                executarComandoUpload(splitted);
-                                break;
-                                
-                            case "exit":
-                                executarComandoExit();
-                                break;
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    } finally {
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    String msg = (String) socket.receiveMessage();
+                    String[] splitted = msg.split(":");
+                    switch(splitted[0]) {
+                        case "login":
+                            executarComandoLogin(splitted);
+                            break;
+                            
+                        case "logout":
+                            executarComandoLogout(splitted);
+                            break;
+                            
+                        case "registar":
+                            executarComandoRegistar(splitted);
+                            break;
+                            
+                        case "download":
+                            executarComandoDownload(splitted);
+                            break;
+                            
+                        case "upload":
+                            executarComandoUpload(splitted);
+                            break;
+                            
+                        case "exit":
+                            executarComandoExit();
+                            break;
                     }
                 }
+                socket.sendMessage("exit");
+                socket.close();
             }
         }
         
@@ -209,6 +209,9 @@ public class FileServer
         }
         
         private void sendUpdates() {
+            // Enviar Lista de Clientes
+            
+            // Enviar Lista de Ficheiros
             
         }
         
