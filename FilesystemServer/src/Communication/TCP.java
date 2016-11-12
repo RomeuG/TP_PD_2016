@@ -76,6 +76,6 @@ public class TCP extends Communication
     public void close() {
         try {
             socket.close();
-        } catch (IOException ex) {}
+        } catch (IOException e) {}
     }
 }
