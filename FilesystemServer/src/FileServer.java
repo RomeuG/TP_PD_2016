@@ -1,8 +1,6 @@
-import static Communication.Communication.getHostAddress;
-import Communication.TCP;
+import Communication.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -86,7 +84,7 @@ public class FileServer
         public AtendeClientes() throws IOException {
             serverSocket = new ServerSocket(PORT_TCP);
             serverSocket.setSoTimeout(10000);
-            defineIP_TCP(getHostAddress());
+            defineIP_TCP(Communication.getHostAddress());
             
             clientThreads = new ArrayList<AtendeCliente>();
             running = true;
