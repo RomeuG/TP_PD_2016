@@ -3,6 +3,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -17,7 +18,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Scanner;
 
-public class FileServer 
+public class FileServer implements Serializable
 {
     public int PORT_TCP = 7000;
     private String IP_TCP;
@@ -29,8 +30,9 @@ public class FileServer
     public String IP_UDP = "192.168.1.67";
     public int PORT_UDP = 8000;
     
+    // CONSTRUTOR
     public FileServer() {
-        // Abrir/ Criar diretório principal do sistema de ficheiros
+        // Abrir/ Criar directório principal do sistema de ficheiros
         if (CreateDirectory(".", defaultFolder))
             System.out.println("Root Created");
         
@@ -69,9 +71,9 @@ public class FileServer
         System.out.println("[Remote Server] shutdown");
     }
     
-    /* Create a Directory with specified 'dName' in path */
-    private boolean CreateDirectory(String path, String dName) {
-        File theDir = new File(path + "/" + dName);
+    /* Create a Directory with specified <dirName> in path */
+    private boolean CreateDirectory(String path, String dirName) {
+        File theDir = new File(path + "/" + dirName);
         
         // if the directory does not exist, create it
         if (!theDir.exists())
@@ -175,8 +177,7 @@ public class FileServer
                     nt = new NotificationThread();
                     nt.start();
                     nt.sleep(30000);
-                } catch (SocketException | UnknownHostException | InterruptedException e) {
-                }
+                } catch (SocketException | UnknownHostException | InterruptedException e) { }
                 
                 while(running) {
                     try {
@@ -273,8 +274,20 @@ public class FileServer
         }
         
         private void executarComandoLogin(String[] splittedList) {
-            // new MsgNewClient(null, null);
-            // ...
+            Cliente cli = new Cliente(splittedList[1], splittedList[2]);
+            
+            if(cli.getUsername() != null && cli.getPassword().equals(splittedList[2])) {
+                String username = splittedList[1];
+                socket.sendMessage(true);
+                
+                // Create user directory
+                CreateDirectory(defaultFolder, cli.getUsername());
+                
+                // new MsgNewClient(null, null);
+                // ...
+            }
+            else
+                socket.sendMessage(false);
         }
         
         private void executarComandoLogout(String[] splittedList) {
@@ -282,7 +295,7 @@ public class FileServer
         }
         
         private void executarComandoRegistar(String[] splittedList) {
-            
+            Cliente cli = new Cliente(splittedList[1], splittedList[2]);
         }
         
         private void executarComandoDownload(String[] splittedList) {
@@ -295,13 +308,6 @@ public class FileServer
         
         private void executarComandoExit() {
             setRunning(false);
-        }
-        
-        private void sendUpdates() {
-            // Enviar Lista de Clientes
-            
-            // Enviar Lista de Ficheiros
-            
         }
         
         @Override

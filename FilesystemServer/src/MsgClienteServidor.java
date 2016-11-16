@@ -1,6 +1,5 @@
-
 import java.io.Serializable;
-import java.net.*;
+import java.net.InetAddress;
 
 public class MsgClienteServidor implements Serializable
 {

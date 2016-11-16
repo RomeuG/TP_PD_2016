@@ -2,7 +2,7 @@ import java.io.Serializable;
 
 public class MsgDirectoryServer implements Serializable
 {
-    private static final long serialVersionUID = 7526472295622776147L;
+    private static final long serialVersionUID = 10127L;
     
     private FileServer server;
     
