@@ -1,8 +1,16 @@
 import Communication.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -11,11 +19,15 @@ import java.util.Scanner;
 
 public class FileServer 
 {
-    public int PORT_TCP = 63000;
+    public int PORT_TCP = 7000;
     private String IP_TCP;
     
     private final String defaultFolder = "Storage";
     private List<TCP> clientes;
+    
+    // Serviço de Directoria (IP e Porto)
+    public String IP_UDP = "192.168.1.67";
+    public int PORT_UDP = 8000;
     
     public FileServer() {
         // Abrir/ Criar diretório principal do sistema de ficheiros
@@ -26,9 +38,9 @@ public class FileServer
     }
     
     /**
-     * This method start a Thread to start accepting clients and 
-     * a Thread to send a HeartBeat to the Directory Service 
-     * and reuse the main thread to receive commands.
+     * Este método corre a Thread para começar a aceitar clientes e 
+     * a Thread para enviar um HeartBeat para o Serviço de Directoria
+     * e reutiliza a thread principal para comandos.
      */
     public void start() {
         AtendeClientes tAtende = null;
@@ -71,6 +83,64 @@ public class FileServer
     public synchronized void defineIP_TCP(String ipTCP) {
         IP_TCP = ipTCP;
     }
+
+    /**
+     * Thread -> Notification To Directory Service
+     */
+    class NotificationThread extends Thread
+    {
+        private DatagramSocket s;
+        private InetAddress addr;
+        private Boolean running;
+        
+        // Construtor
+        public NotificationThread() throws SocketException, UnknownHostException {
+            s = new DatagramSocket();
+            addr = InetAddress.getByName(IP_UDP);
+            
+            running = true;
+        }
+        
+        public synchronized void setRunning(Boolean running) {
+            this.running = running;
+        }
+        
+        @Override
+        public void run() {
+            synchronized(running) {
+                while(running) {
+                    try {
+                        ByteArrayOutputStream bout = null;
+                        ObjectOutputStream out = null;
+                        DatagramPacket sendP;
+
+                        s.setSoTimeout(10000);
+
+                        bout = new ByteArrayOutputStream();
+                        out = new ObjectOutputStream(bout);
+                        out.writeObject(new MsgDirectoryServer(FileServer.this));
+                        out.flush();
+
+                        sendP = new DatagramPacket(bout.toByteArray(), bout.size(), addr, PORT_UDP);
+
+                        s.send(sendP);
+                    } catch (UnknownHostException e) {
+                        System.out.println("Erro " + e);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Erro " + e);
+                    } catch (SocketTimeoutException e) {
+                        System.out.println("Erro " + e);
+                    } catch (IOException e) {
+                        System.out.println("Erro " + e);
+                    }
+                    
+                    try {
+                        running.wait(500);
+                    } catch (InterruptedException ex) {}
+                }
+            }
+        }
+    }
     
     /**
      * Thread -> Accept new clients
@@ -79,18 +149,19 @@ public class FileServer
     {
         private ServerSocket serverSocket;
         private List<AtendeCliente> clientThreads;
-        private boolean running;
+        private Boolean running;
 
+        // Construtor
         public AtendeClientes() throws IOException {
             serverSocket = new ServerSocket(PORT_TCP);
             serverSocket.setSoTimeout(10000);
             defineIP_TCP(Communication.getHostAddress());
             
-            clientThreads = new ArrayList<AtendeCliente>();
+            clientThreads = new ArrayList<>();
             running = true;
         }
 
-        public synchronized void setRunning(boolean running) {
+        public synchronized void setRunning(Boolean running) {
             this.running = running;
         }
         
@@ -98,6 +169,15 @@ public class FileServer
         public void run() {
             synchronized(running) {
                 System.out.println("[Thread Atendimento Clientes] A aguardar novos clientes");
+                
+                NotificationThread nt;
+                try {
+                    nt = new NotificationThread();
+                    nt.start();
+                    nt.sleep(30000);
+                } catch (SocketException | UnknownHostException | InterruptedException e) {
+                }
+                
                 while(running) {
                     try {
                         Socket s = serverSocket.accept();
@@ -106,7 +186,12 @@ public class FileServer
                         AtendeCliente atendeCliente = new AtendeCliente(t);
                         clientThreads.add(atendeCliente);
                         atendeCliente.start();
+                        System.out.println( "Lancada thread para atender o cliente " + s.getInetAddress().getHostAddress() + ":" + s.getPort());
                     } catch (IOException ex) {}
+                    
+                    try {
+                        running.wait(500);
+                    } catch (InterruptedException ex) {}
                 }
             }
             
@@ -134,14 +219,15 @@ public class FileServer
     class AtendeCliente extends Thread implements Observer 
     {
         private TCP socket;
-        private boolean running;
+        private Boolean running;
         
+        // Construtor
         public AtendeCliente(TCP socket) {
             this.socket = socket;
             running = true;
         }
 
-        public synchronized void setRunning(boolean running) {
+        public synchronized void setRunning(Boolean running) {
             this.running = running;
         }
         
@@ -176,6 +262,10 @@ public class FileServer
                             executarComandoExit();
                             break;
                     }
+                    
+                    try {
+                        running.wait(500);
+                    } catch (InterruptedException ex) {}
                 }
                 socket.sendMessage("exit");
                 socket.close();
@@ -183,7 +273,8 @@ public class FileServer
         }
         
         private void executarComandoLogin(String[] splittedList) {
-            
+            // new MsgNewClient(null, null);
+            // ...
         }
         
         private void executarComandoLogout(String[] splittedList) {
