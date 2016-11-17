@@ -3,7 +3,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -18,7 +17,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Scanner;
 
-public class FileServer implements Serializable
+public class FileServer
 {
     public int PORT_TCP = 7000;
     private String IP_TCP;
@@ -44,11 +43,12 @@ public class FileServer implements Serializable
      * a Thread para enviar um HeartBeat para o Serviço de Directoria
      * e reutiliza a thread principal para comandos.
      */
-    public void start() {
+    public void startFileServer() {
         AtendeClientes tAtende = null;
         
         try {
             tAtende = new AtendeClientes();
+            System.out.println("Vou Iniciar a thread do Cliente!");
             tAtende.start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -89,60 +89,7 @@ public class FileServer implements Serializable
     /**
      * Thread -> Notification To Directory Service
      */
-    class NotificationThread extends Thread
-    {
-        private DatagramSocket s;
-        private InetAddress addr;
-        private Boolean running;
-        
-        // Construtor
-        public NotificationThread() throws SocketException, UnknownHostException {
-            s = new DatagramSocket();
-            addr = InetAddress.getByName(IP_UDP);
-            
-            running = true;
-        }
-        
-        public synchronized void setRunning(Boolean running) {
-            this.running = running;
-        }
-        
-        @Override
-        public void run() {
-            synchronized(running) {
-                while(running) {
-                    try {
-                        ByteArrayOutputStream bout = null;
-                        ObjectOutputStream out = null;
-                        DatagramPacket sendP;
 
-                        s.setSoTimeout(10000);
-
-                        bout = new ByteArrayOutputStream();
-                        out = new ObjectOutputStream(bout);
-                        out.writeObject(new MsgDirectoryServer(FileServer.this));
-                        out.flush();
-
-                        sendP = new DatagramPacket(bout.toByteArray(), bout.size(), addr, PORT_UDP);
-
-                        s.send(sendP);
-                    } catch (UnknownHostException e) {
-                        System.out.println("Erro " + e);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Erro " + e);
-                    } catch (SocketTimeoutException e) {
-                        System.out.println("Erro " + e);
-                    } catch (IOException e) {
-                        System.out.println("Erro " + e);
-                    }
-                    
-                    try {
-                        running.wait(500);
-                    } catch (InterruptedException ex) {}
-                }
-            }
-        }
-    }
     
     /**
      * Thread -> Accept new clients
@@ -172,15 +119,16 @@ public class FileServer implements Serializable
             synchronized(running) {
                 System.out.println("[Thread Atendimento Clientes] A aguardar novos clientes");
                 
-                NotificationThread nt;
-                try {
-                    nt = new NotificationThread();
-                    nt.start();
-                    nt.sleep(30000);
+                HeartBeat nt;
+               /* try {
+                    //nt = new HeartBeat();
+                    //nt.startFileServer();
+                    //nt.sleep(30000);
                 } catch (SocketException | UnknownHostException | InterruptedException e) { }
-                
+                */
                 while(running) {
                     try {
+                        System.out.println("[INFO] - Waiting for connection...");
                         Socket s = serverSocket.accept();
                         TCP t = new TCP(s);
                         clientes.add(t);
@@ -274,7 +222,7 @@ public class FileServer implements Serializable
         }
         
         private void executarComandoLogin(String[] splittedList) {
-            Cliente cli = new Cliente(splittedList[1], splittedList[2]);
+            Cliente cli = new Cliente(splittedList[1], splittedList[2], );
             
             if(cli.getUsername() != null && cli.getPassword().equals(splittedList[2])) {
                 String username = splittedList[1];

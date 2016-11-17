@@ -1,14 +1,21 @@
-public class Cliente 
+public class Cliente
 {
     private String username;
     private String password;
     private boolean logado;
+    private String IP_CLIENTE;
+    private int PORTO_CLIENTE;
     
-    public Cliente(String username, String password) {
+    public Cliente(String username, String password, String IP_CLIENTE, int PORTO_CLIENTE) {
         this.username = username;
         this.password = password;
-        logado = false;
+        this.IP_CLIENTE = IP_CLIENTE;
+        this.PORTO_CLIENTE = PORTO_CLIENTE;
     }
+
+
+
+
 
     public String getUsername() {
         return username;
@@ -21,5 +28,13 @@ public class Cliente
     }
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getIP_CLIENTE() {
+        return IP_CLIENTE;
+    }
+
+    public int getPORTO_CLIENTE() {
+        return PORTO_CLIENTE;
     }
 }
