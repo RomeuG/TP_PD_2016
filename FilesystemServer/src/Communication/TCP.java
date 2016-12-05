@@ -10,12 +10,14 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TCP extends Communication
+public class TCP extends Communication implements Serializable
 {
     Socket socket;
-
-    public TCP(Socket socket) {
+    Cliente cli;
+    
+    public TCP(Socket socket, Cliente cli) {
         this.socket = socket;
+        this.cli = cli;
     }
     
     public TCP(String hostname, int port) {
@@ -23,6 +25,14 @@ public class TCP extends Communication
             this.socket = new Socket(hostname, port);
         } catch (UnknownHostException ex) {
         } catch (IOException ex) {}
+    }
+    
+    public Cliente getCli() {
+        return cli;
+    }
+
+    public void setCli(Cliente cli) {
+        this.cli = cli;
     }
     
     @Override

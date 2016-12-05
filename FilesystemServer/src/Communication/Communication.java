@@ -5,7 +5,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
- /* This abstract class shows how to build a new communication. */
+ /* Esta classe abstrata mostra como construir uma nova comunicacao */
 public abstract class Communication 
 {
     final int BUFSIZE = 4096;
