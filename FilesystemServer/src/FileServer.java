@@ -1,9 +1,16 @@
+
 import Communication.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -16,101 +23,110 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Scanner;
 
-public class FileServer implements Serializable
-{
-    public int PORT_TCP = 7000;
+public class FileServer {
+
+    /* IP/Porto TCP e Nome do Servidor */
+    private int PORT_TCP = 7000;
     private String IP_TCP;
-    
-    private final String defaultFolder = "Storage";
+    private String nomeServer;
+    private final String defaultFolder = "AreaTrabalho";
     private List<TCP> clientes;
-    
-    // Serviço de Directoria (IP e Porto)
+    private List<String> usernamesClients;
+
+    /* Serviço de Directoria (IP e Porto) */
     public String IP_UDP = "192.168.1.67";
     public int PORT_UDP = 8000;
-    
+
     // CONSTRUTOR
-    public FileServer() {
-        // Abrir/ Criar directório principal do sistema de ficheiros
+    public FileServer(String nomeServer) {
+        this.nomeServer = nomeServer;
+        
+        // Abrir/Criar directório principal do sistema de ficheiros
         if (CreateDirectory(".", defaultFolder))
             System.out.println("Root Created");
-        
+
         clientes = new ArrayList<>();
     }
-    
+
+    // GETTERS
+    public int getPORT_TCP() { return PORT_TCP; }
+    public String getNomeServer() { return nomeServer; }
+
     /**
-     * Este método corre a Thread para começar a aceitar clientes e 
-     * a Thread para enviar um HeartBeat para o Serviço de Directoria
-     * e reutiliza a thread principal para comandos.
+     * Método que corre a Thread para começar a aceitar clientes e a Thread
+     * para enviar um HeartBeat para o Serviço de Directoria e reutiliza a
+     * thread principal para comandos.
      */
-    public void start() {
+    public void startServer() {
         AtendeClientes tAtende = null;
-        
+
+        try {
+            Thread tHeartBeat = new Thread(new NotificationThread());
+            tHeartBeat.setDaemon(true); //Pode dar problemas
+            tHeartBeat.start();
+        } catch (SocketException | UnknownHostException e) {
+            e.printStackTrace();
+        }
+
         try {
             tAtende = new AtendeClientes();
             tAtende.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
-        String adminMessage;
-        do {
-            Scanner sc = new Scanner(System.in);
-            System.out.print(" >> ");
-            adminMessage = sc.next();
-        } while(!"exit".equals(adminMessage));
-        
-        
+
         // Encerrar todas as Threads a correr
         try {
             tAtende.setRunning(false);
             tAtende.join();
-        } catch (InterruptedException e) {}
-        
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         System.out.println("[Remote Server] shutdown");
     }
-    
-    /* Create a Directory with specified <dirName> in path */
+
+    /* Cria um Directorio com o <dirName> no path */
     private boolean CreateDirectory(String path, String dirName) {
         File theDir = new File(path + "/" + dirName);
-        
-        // if the directory does not exist, create it
+
+        // Se o directorio nao existe, cria-o
         if (!theDir.exists())
-          return theDir.mkdir();
-        
+            return theDir.mkdir();
+
         return true;
     }
-    
+
     public synchronized void defineIP_TCP(String ipTCP) {
         IP_TCP = ipTCP;
     }
 
     /**
-     * Thread -> Notification To Directory Service
+     * Thread -> Notification To Directory Service ( sends HeartBeat )
      */
-    class NotificationThread extends Thread
-    {
+    class NotificationThread extends Thread {
+
         private DatagramSocket s;
         private InetAddress addr;
         private Boolean running;
-        
+
         // Construtor
         public NotificationThread() throws SocketException, UnknownHostException {
             s = new DatagramSocket();
             addr = InetAddress.getByName(IP_UDP);
-            
+
             running = true;
         }
-        
+
         public synchronized void setRunning(Boolean running) {
             this.running = running;
         }
-        
+
         @Override
         public void run() {
-            synchronized(running) {
-                while(running) {
+            synchronized (running) {
+                while (running) {
                     try {
                         ByteArrayOutputStream bout = null;
                         ObjectOutputStream out = null;
@@ -126,29 +142,29 @@ public class FileServer implements Serializable
                         sendP = new DatagramPacket(bout.toByteArray(), bout.size(), addr, PORT_UDP);
 
                         s.send(sendP);
-                    } catch (UnknownHostException e) {
+                    } catch (UnknownHostException | NumberFormatException | SocketTimeoutException e) {
                         System.out.println("Erro " + e);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Erro " + e);
-                    } catch (SocketTimeoutException e) {
-                        System.out.println("Erro " + e);
+                        return;
                     } catch (IOException e) {
                         System.out.println("Erro " + e);
+                        return;
                     }
-                    
+
                     try {
-                        running.wait(500);
-                    } catch (InterruptedException ex) {}
+                        sleep(30000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
                 }
             }
         }
     }
-    
+
     /**
      * Thread -> Accept new clients
      */
-    class AtendeClientes extends Thread 
-    {
+    class AtendeClientes extends Thread {
+
         private ServerSocket serverSocket;
         private List<AtendeCliente> clientThreads;
         private Boolean running;
@@ -158,7 +174,7 @@ public class FileServer implements Serializable
             serverSocket = new ServerSocket(PORT_TCP);
             serverSocket.setSoTimeout(10000);
             defineIP_TCP(Communication.getHostAddress());
-            
+
             clientThreads = new ArrayList<>();
             running = true;
         }
@@ -166,64 +182,59 @@ public class FileServer implements Serializable
         public synchronized void setRunning(Boolean running) {
             this.running = running;
         }
-        
+
         @Override
         public void run() {
-            synchronized(running) {
+            synchronized (running) {
                 System.out.println("[Thread Atendimento Clientes] A aguardar novos clientes");
-                
-                NotificationThread nt;
-                try {
-                    nt = new NotificationThread();
-                    nt.start();
-                    nt.sleep(30000);
-                } catch (SocketException | UnknownHostException | InterruptedException e) { }
-                
-                while(running) {
+
+                while (running) {
                     try {
                         Socket s = serverSocket.accept();
-                        TCP t = new TCP(s);
-                        clientes.add(t);
-                        AtendeCliente atendeCliente = new AtendeCliente(t);
+                        AtendeCliente atendeCliente = new AtendeCliente(s);
                         clientThreads.add(atendeCliente);
                         atendeCliente.start();
-                        System.out.println( "Lancada thread para atender o cliente " + s.getInetAddress().getHostAddress() + ":" + s.getPort());
-                    } catch (IOException ex) {}
-                    
-                    try {
-                        running.wait(500);
-                    } catch (InterruptedException ex) {}
+                        System.out.println("Lancada thread para atender o cliente " + s.getInetAddress().getHostAddress() + ":" + s.getPort());
+                    } catch (IOException e) {
+                        System.out.println("Erro " + e);
+                        return;
+                    }
                 }
             }
-            
-            System.out.println( "[Thread Atendimento Clientes] Server is not accepting new clients anymore");
-            
+
+            System.out.println("[Thread Atendimento Clientes] Server is not accepting new clients anymore");
+
             // Warn all clients
-            for(int i=0; i<clientThreads.size(); i++) {
+            for (int i = 0; i < clientThreads.size(); i++) {
                 try {
                     clientThreads.get(i).setRunning(false);
                     clientThreads.get(i).join();
-                } catch (InterruptedException ex) {}
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
             }
             try {
                 serverSocket.close();
-            } catch (IOException ex) {}
-            
+            } catch (IOException e) {
+                System.out.println("Erro " + e);
+                return;
+            }
+
             // Warn Directory Service
             // ...
         }
     }
-    
+
     /**
      * Thread -> Manage single client
      */
-    class AtendeCliente extends Thread implements Observer 
-    {
-        private TCP socket;
-        private Boolean running;
+    class AtendeCliente extends Thread implements Observer {
         
+        private Socket socket;
+        private Boolean running;
+
         // Construtor
-        public AtendeCliente(TCP socket) {
+        public AtendeCliente(Socket socket) {
             this.socket = socket;
             running = true;
         }
@@ -231,85 +242,190 @@ public class FileServer implements Serializable
         public synchronized void setRunning(Boolean running) {
             this.running = running;
         }
-        
+
         @Override
         public void run() {
-            synchronized(running) {
-                while(running) {
-                    String msg = (String) socket.receiveMessage();
-                    String[] splitted = msg.split(":");
-                    switch(splitted[0]) {
-                        case "login":
-                            executarComandoLogin(splitted);
-                            break;
-                            
-                        case "logout":
-                            executarComandoLogout(splitted);
-                            break;
-                            
-                        case "registar":
-                            executarComandoRegistar(splitted);
-                            break;
-                            
-                        case "download":
-                            executarComandoDownload(splitted);
-                            break;
-                            
-                        case "upload":
-                            executarComandoUpload(splitted);
-                            break;
-                            
-                        case "exit":
-                            executarComandoExit();
-                            break;
-                    }
-                    
+            synchronized (running) {
+                while (running) {
+                    ObjectInputStream in;
                     try {
-                        running.wait(500);
-                    } catch (InterruptedException ex) {}
+                        in = new ObjectInputStream(socket.getInputStream());
+
+                        Object obrec = in.readObject();
+                        String msg;
+
+                        if (obrec instanceof String) {
+                            msg = (String) obrec;
+
+                            String[] splitted = msg.split(":");
+                            switch (splitted[0]) {
+                                case "login":
+                                    executarComandoLogin(splitted);
+                                    break;
+
+                                case "logout":
+                                    executarComandoLogout(splitted);
+                                    break;
+
+                                case "registar":
+                                    executarComandoRegistar(splitted);
+                                    break;
+
+                                case "download":
+                                    executarComandoDownload(splitted);
+                                    break;
+
+                                case "upload":
+                                    executarComandoUpload(splitted);
+                                    break;
+
+                                case "exit":
+                                    executarComandoExit();
+                                    break;
+                            }
+                        } else {
+                            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                            out.writeObject("<EXIT>");
+                            out.flush();
+                        }
+                    } catch (IOException | ClassNotFoundException ex) {
+                        ex.printStackTrace();
+                    }
+
+                    try {
+                        socket.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
-                socket.sendMessage("exit");
-                socket.close();
             }
         }
-        
+
         private void executarComandoLogin(String[] splittedList) {
             Cliente cli = new Cliente(splittedList[1], splittedList[2]);
-            
-            if(cli.getUsername() != null && cli.getPassword().equals(splittedList[2])) {
+
+            if (cli.getUsername() != null && cli.getPassword().equals(splittedList[2])) {
                 String username = splittedList[1];
-                socket.sendMessage(true);
-                
+
+                try {
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    outputStream.writeObject("<Login_Success>");
+                    outputStream.flush();
+
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // Adiciona um novo objecto do tipo TCP à lista
+                clientes.add(new TCP(socket, cli));
                 // Create user directory
                 CreateDirectory(defaultFolder, cli.getUsername());
-                
-                // new MsgNewClient(null, null);
-                // ...
+
+            } else {
+                try {
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    outputStream.writeObject("<Login_failed>");
+                    outputStream.flush();
+
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-            else
-                socket.sendMessage(false);
         }
-        
+
+        private void removeCliente(String username) {
+            int conta = 0;
+            for (TCP c : clientes) {
+                if (c.getCli().getUsername().equals(username)) {
+                    clientes.remove(conta);
+                }
+
+                conta++;
+            }
+        }
+
         private void executarComandoLogout(String[] splittedList) {
-            
+            try {
+                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                ObjectOutputStream out = new ObjectOutputStream(bout);
+                DatagramSocket s = new DatagramSocket();
+                MsgLogoutToDirectory msg = new MsgLogoutToDirectory(splittedList[0], InetAddress.getByName(IP_UDP), PORT_UDP);
+                out.writeObject(msg);
+
+                DatagramPacket dp = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(IP_UDP), PORT_UDP);
+                s.send(dp);
+            } catch (SocketException ex) {
+            } catch (UnknownHostException ex) {
+            } catch (IOException ex) {
+            }
+
+            removeCliente(splittedList[0]);
         }
-        
+
         private void executarComandoRegistar(String[] splittedList) {
             Cliente cli = new Cliente(splittedList[1], splittedList[2]);
+
+            File f = new File("ComRegistos"); // mudar directoria!
+            FileWriter fileWriter;
+            BufferedWriter bw;
+            PrintWriter pw;
+
+            try {
+                if (!existsClient(splittedList[1], f)) {
+                    if (f.exists()) {
+                        fileWriter = new FileWriter(f, true);
+                        bw = new BufferedWriter(fileWriter);
+                        pw = new PrintWriter(bw);
+                        pw.println(cli.getUsername() + ":" + cli.getPassword());
+                        pw.close();
+                    } else {
+                        fileWriter = new FileWriter(f, false);
+                        bw = new BufferedWriter(fileWriter);
+                        pw = new PrintWriter(bw);
+                        pw.println(cli.getUsername() + ":" + cli.getPassword());
+                        pw.close();
+                    }
+                }
+            } catch (IOException ex) {
+            }
         }
-        
+
+        private boolean existsClient(String splittedList, File f) {
+            if (f.exists()) {
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    StringBuilder sb = new StringBuilder();
+                    String line = br.readLine();
+
+                    while (line != null) {
+                        String[] aux = line.split(":");
+                        if (aux[0].equals(splittedList))
+                            return true;
+                        
+                        line = br.readLine();
+                    }
+                } catch (FileNotFoundException ex) {
+                } catch (IOException ex) {
+                }
+            }
+
+            return false;
+        }
+
         private void executarComandoDownload(String[] splittedList) {
-            
+
         }
-        
-        private void executarComandoUpload(String [] splittedList) {
-            
+
+        private void executarComandoUpload(String[] splittedList) {
+
         }
-        
+
         private void executarComandoExit() {
             setRunning(false);
         }
-        
+
         @Override
         public void update(Observable o, Object arg) {
             System.out.println(arg);
