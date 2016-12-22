@@ -1,6 +1,11 @@
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
-public class Chat extends javax.swing.JFrame {
 
+public class Chat extends javax.swing.JFrame 
+{
+    byte [] buf;
+    
     /**
      * Creates new form Chat
      */
@@ -18,7 +23,7 @@ public class Chat extends javax.swing.JFrame {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
+        jList = new javax.swing.JList();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTextArea2 = new javax.swing.JTextArea();
@@ -29,12 +34,12 @@ public class Chat extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Chat");
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
+        jList.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane1.setViewportView(jList1);
+        jScrollPane1.setViewportView(jList);
 
         jTextArea2.setColumns(20);
         jTextArea2.setRows(5);
@@ -97,8 +102,12 @@ public class Chat extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    // Envia mensagem via UDP para outro cliente da lista
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        DatagramSocket s = new DatagramSocket();
+        DatagramPacket p = new DatagramPacket(buf[1024], 1024);
+        
+        
     }//GEN-LAST:event_jButton1ActionPerformed
 
     public static void main(String args[]) {
@@ -135,7 +144,7 @@ public class Chat extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
-    private javax.swing.JList jList1;
+    private javax.swing.JList jList;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

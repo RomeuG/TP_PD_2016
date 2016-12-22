@@ -1,4 +1,7 @@
 
+import javax.swing.JOptionPane;
+
+
 public class LoginScreen extends javax.swing.JDialog {
 
     /**
@@ -6,9 +9,12 @@ public class LoginScreen extends javax.swing.JDialog {
      */
     
     Utils u;
+    
     public LoginScreen(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        u = new Utils(Utils.ip, Utils.port);
     }
 
     /**
@@ -103,21 +109,24 @@ public class LoginScreen extends javax.swing.JDialog {
     }//GEN-LAST:event_jTFUsernameLoginActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        String username;
-        String password;
-        u = new Utils();
-        username = jTFUsernameLogin.getText();
-        password = jTFPasswordLogin.getText();
-        u.login(username, password);
+        String username = jTFUsernameLogin.getText();
+        String password = jTFPasswordLogin.getText();
+        
+        if (u.login(username, password) == true)
+        {
+            JOptionPane.showMessageDialog(this, "Login efetuado.");
+            
+            // IR PARA A PROXIMA JANELA
+            // ...
+            new ClientApp().setVisible(true);
+            this.dispose();
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">

@@ -1,17 +1,73 @@
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.util.List;
 
-public class ServerList extends javax.swing.JFrame {
-
+public class ServerList extends javax.swing.JFrame 
+{
+    List<ServerInfo> lista;
+    DatagramSocket s;
+    DatagramPacket p;
+    ByteArrayInputStream bin;
+    ByteArrayOutputStream bout;
+    ObjectInputStream in;
+    ObjectOutputStream out;
+    int tamanho;
+    
     /**
      * Creates new form ServerList
      */
     public ServerList() {
         initComponents();
-        // enviar pacote UDP
-        DatagramSocket s = new DatagramSocket();
-        DatagramPacket p = new DatagramPacket(buf, WIDTH);
+        
+        
+        try {
+            // enviar pacote UDP para o Serviço de Directoria
+            s = new DatagramSocket();
+            s.setSoTimeout(10000);
+        
+            bout = new ByteArrayOutputStream();
+            out = new ObjectOutputStream(bout);
+            out.writeObject("<QUERO_LISTA>");
+            out.flush();
+            
+            //p = new DatagramPacket(bout.toByteArray(), bout.size(), ipServicoDirectoria, portServicoDirecotria);
+            s.send(p);
+        
+            // recebe objecto - tamanho da lista
+            p = new DatagramPacket(new byte[1024], 1024);
+            s.receive(p);
+            
+            in = new ObjectInputStream(new ByteArrayInputStream(p.getData(), 0, p.getLength()));
+            tamanho = (Integer) in.readObject();
+            
+            // recebe objeto - lista
+            p = new DatagramPacket(new byte[tamanho], tamanho);
+            s.receive(p);
+            
+            in = new ObjectInputStream(new ByteArrayInputStream(p.getData(), 0, p.getLength()));
+            List<ServerInfo> lista = (List<ServerInfo>) in.readObject();
+            
+            //System.out.println(lista.get(i));
+        
+        } catch(UnknownHostException e) {
+            System.out.println("Erro " + e);
+        } catch(SocketTimeoutException e) {
+            System.out.println("Erro " + e);
+        } catch(SocketException e) {
+            System.out.println("Erro " + e);
+        } catch(IOException e) {
+            System.out.println("Erro " + e);
+        } catch (ClassNotFoundException e) {
+            System.out.println("Erro " + e);
+        }
     }
 
     /**
@@ -73,12 +129,13 @@ public class ServerList extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
+        // Ligar a um Servidor!
+        
+        new ClientApp().setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">

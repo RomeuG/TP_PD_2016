@@ -1,9 +1,6 @@
 
-/**
- *
- * @author João
- */
-public class ClientApp extends javax.swing.JFrame implements InterfaceCli 
+
+public class ClientApp extends javax.swing.JFrame
 {
     /**
      * Creates new form NewApplication
@@ -131,14 +128,14 @@ public class ClientApp extends javax.swing.JFrame implements InterfaceCli
 
     //Login
     private void openMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMenuItemActionPerformed
-        // TODO add your handling code here:
         LoginScreen l = new LoginScreen(this, rootPaneCheckingEnabled);
         l.setVisible(true);
     }//GEN-LAST:event_openMenuItemActionPerformed
     
     //Registar
     private void pasteMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pasteMenuItemActionPerformed
-        // TODO add your handling code here:
+        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled);
+        r.setVisible(true);
     }//GEN-LAST:event_pasteMenuItemActionPerformed
 
     private void aboutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutMenuItemActionPerformed
@@ -148,7 +145,7 @@ public class ClientApp extends javax.swing.JFrame implements InterfaceCli
 
     //Logout
     private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
-        // TODO add your handling code here:
+        
         
     }//GEN-LAST:event_saveMenuItemActionPerformed
 
@@ -199,35 +196,5 @@ public class ClientApp extends javax.swing.JFrame implements InterfaceCli
     private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JMenuItem saveMenuItem;
     // End of variables declaration//GEN-END:variables
-
-    @Override
-    public void register() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void login() {
-        
-    }
-
-    @Override
-    public void logout() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void copyFile() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void moveFile() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void removeFile() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
 }
