@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-public class FileServer {
-
+public class FileServer 
+{
     /* IP/Porto TCP e Nome do Servidor */
     private int PORT_TCP = 7000;
     private String IP_TCP;
@@ -325,7 +325,7 @@ public class FileServer {
             } else {
                 try {
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                    outputStream.writeObject("<Login_failed>");
+                    outputStream.writeObject("<Login_Failed>");
                     outputStream.flush();
 
                     socket.close();
@@ -356,6 +356,13 @@ public class FileServer {
 
                 DatagramPacket dp = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(IP_UDP), PORT_UDP);
                 s.send(dp);
+                
+                ObjectOutputStream outs = new ObjectOutputStream(socket.getOutputStream());
+                outs.writeObject("<Logout_OK>");
+                outs.flush();
+                
+                s.close();
+                socket.close();
             } catch (SocketException ex) {
             } catch (UnknownHostException ex) {
             } catch (IOException ex) {
@@ -371,6 +378,7 @@ public class FileServer {
             FileWriter fileWriter;
             BufferedWriter bw;
             PrintWriter pw;
+            ObjectOutputStream out;
 
             try {
                 if (!existsClient(splittedList[1], f)) {
@@ -387,9 +395,23 @@ public class FileServer {
                         pw.println(cli.getUsername() + ":" + cli.getPassword());
                         pw.close();
                     }
+                    
+                    // Regista-se com sucesso
+                    out = new ObjectOutputStream(socket.getOutputStream());
+                    out.writeObject("<Regist_Success>");
+                    out.flush();
+
+                    socket.close();
                 }
-            } catch (IOException ex) {
-            }
+                else {
+                    // Regista-se SEM sucesso
+                    out = new ObjectOutputStream(socket.getOutputStream());
+                    out.writeObject("<Regist_Failed>");
+                    out.flush();
+
+                    socket.close();
+                }
+            } catch (IOException ex) { }
         }
 
         private boolean existsClient(String splittedList, File f) {
