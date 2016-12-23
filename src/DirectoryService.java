@@ -90,39 +90,32 @@ public class DirectoryService implements DirServiceInterface {
     class ThreadClients implements Runnable {
 
         DatagramSocket s;
+        byte[] buf;
+
+        private void tratarPacket(DatagramPacket packet) {
+
+        }
 
         @Override
         public void run() {
-            while(true) {
+            while (true) {
                 try {
                     s = new DatagramSocket();
 
-                    byte[] buf = new byte[1000];
+                    buf = new byte[1000];
 
                     DatagramPacket dp = new DatagramPacket(buf, buf.length);
-                    InetAddress hostAddress = InetAddress.getByName("localhost");
+                    s.receive(dp);
 
-                    DatagramPacket out = new DatagramPacket(buf, buf.length, hostAddress, 8090);
+                    DatagramPacket out = new DatagramPacket(buf, buf.length, dp.getAddress(), dp.getPort());
                     s.send(out);
 
                     s.setSoTimeout(1000);
 
-                    while(true)
-                    {
-                        try {
-                            s.receive(dp);
-                            String rcvd = "rcvd from " + dp.getAddress() + ", " + dp.getPort() + ": "+ new String(dp.getData(), 0, dp.getLength());
-                            System.out.println(rcvd);
-                        }
-                        catch (SocketTimeoutException e) {
-                            s.close();
-                        }
-                    }
-
-                } catch (SocketException e1) {
-
+                } catch (SocketException e) {
+                    s.close();
                 } catch (IOException e) {
-
+                    s.close();
                 }
             }
         }
