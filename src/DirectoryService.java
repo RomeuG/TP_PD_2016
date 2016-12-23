@@ -2,9 +2,12 @@
 // FEITO COM ERROS DE COMPILACAO
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.DatagramPacket;
+import java.net.*;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 public class DirectoryService implements DirServiceInterface {
 
@@ -12,7 +15,7 @@ public class DirectoryService implements DirServiceInterface {
     private static final int PORT = 1337;
 
     // lista servidores
-    private List<Servidor> serverList;
+    private List<ServerInfo> serverList;
     // lista utilizadores registados & logados
     private List<Utilizador> userListRegistered;
     private List<Utilizador> userListLoggedIn;
@@ -20,17 +23,28 @@ public class DirectoryService implements DirServiceInterface {
     public void DirServiceInit() {
         // Obter utilizadores registados
 
-        // Iniciar thread
+        // Iniciar thread server check
         Thread verifyServer = new Thread(new ServerCheck());
+        verifyServer.setDaemon(true);
+        verifyServer.start();
+
+        // Iniciar thread da resposta dos clientes
+        Thread threadClients = new Thread(new ThreadClients());
         verifyServer.setDaemon(true);
         verifyServer.start();
     }
 
     public void parseHeartBeat(DatagramPacket packetObj) {
+        try {
+            byte[] data = packetObj.getData();
+            ByteArrayInputStream in = new ByteArrayInputStream(data);
+            ObjectInputStream is = null;
 
-        byte[] data = packetObj.getData();
-        ByteArrayInputStream in = new ByteArrayInputStream(data);
-        ObjectInputStream is = new ObjectInputStream(in);
+            is = new ObjectInputStream(in);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         HeartBeat hb = (HeartBeat) is.readObject();
         // TODO: verificar de onde veio
@@ -48,19 +62,17 @@ public class DirectoryService implements DirServiceInterface {
         @Override
         public void run() {
             try {
-                while(true){
-                    synchronized(serverList) {
-                        if( !serverList.isEmpty()){
+                while (true) {
+                    synchronized (serverList) {
+                        if (!serverList.isEmpty()) {
 
-                            Iterator<Servidor> it = serverList.iterator();
+                            Iterator<ServerInfo> it = serverList.iterator();
 
                             while (it.hasNext()) {
-
-                                Servidor s = it.next();
+                                ServerInfo s = it.next();
 
                                 long seconds = (new Date().getTime() - s.getDate().getTime()) / 1000;
-
-                                if(seconds > 30){
+                                if (seconds > 30) {
                                     it.remove();
                                 }
                             }
@@ -71,6 +83,47 @@ public class DirectoryService implements DirServiceInterface {
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    class ThreadClients implements Runnable {
+
+        DatagramSocket s;
+
+        @Override
+        public void run() {
+            while(true) {
+                try {
+                    s = new DatagramSocket();
+
+                    byte[] buf = new byte[1000];
+
+                    DatagramPacket dp = new DatagramPacket(buf, buf.length);
+                    InetAddress hostAddress = InetAddress.getByName("localhost");
+
+                    DatagramPacket out = new DatagramPacket(buf, buf.length, hostAddress, 8090);
+                    s.send(out);
+
+                    s.setSoTimeout(1000);
+
+                    while(true)
+                    {
+                        try {
+                            s.receive(dp);
+                            String rcvd = "rcvd from " + dp.getAddress() + ", " + dp.getPort() + ": "+ new String(dp.getData(), 0, dp.getLength());
+                            System.out.println(rcvd);
+                        }
+                        catch (SocketTimeoutException e) {
+                            s.close();
+                        }
+                    }
+
+                } catch (SocketException e1) {
+
+                } catch (IOException e) {
+
+                }
             }
         }
     }
