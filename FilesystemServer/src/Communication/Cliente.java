@@ -6,13 +6,19 @@ public class Cliente implements Serializable
 {
     private String username;
     private String password;
-    // ip serv directoria, porto
-    // List<servidor>
-    // logado
+    private String ip;
+    private int porto;
     
     public Cliente(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+    
+    public Cliente(String username, String password, String ip, int porto) {
+        this.username = username;
+        this.password = password;
+        this.ip = ip;
+        this.porto = porto;
     }
 
     public String getUsername() {
@@ -26,5 +32,21 @@ public class Cliente implements Serializable
     }
     public void setPassword(String password) {
         this.password = password;
+    }
+    
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public int getPorto() {
+        return porto;
+    }
+
+    public void setPorto(int porto) {
+        this.porto = porto;
     }
 }

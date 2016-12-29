@@ -23,16 +23,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class FileServer 
+public class FileServer
 {
     /* IP/Porto TCP e Nome do Servidor */
-    private int PORT_TCP = 7000;
+    private int PORT_TCP = 5001;
     private String IP_TCP;
     private String nomeServer;
     private final String defaultFolder = "AreaTrabalho";
     private List<TCP> clientes;
-    private List<String> usernamesClients;
+    private MsgDirectoryServer msg;
 
     /* Serviço de Directoria (IP e Porto) */
     public String IP_UDP = "192.168.1.67";
@@ -60,9 +62,11 @@ public class FileServer
      */
     public void startServer() {
         AtendeClientes tAtende = null;
+        NotificationThread tHeartBeat = null;
 
         try {
-            Thread tHeartBeat = new Thread(new NotificationThread());
+            msg = new MsgDirectoryServer(getNomeServer(), new ArrayList<>());
+            tHeartBeat = new NotificationThread();
             tHeartBeat.setDaemon(true); //Pode dar problemas
             tHeartBeat.start();
         } catch (SocketException | UnknownHostException e) {
@@ -78,7 +82,7 @@ public class FileServer
 
         // Encerrar todas as Threads a correr
         try {
-            tAtende.setRunning(false);
+            //tAtende.setRunning(false);
             tAtende.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -89,7 +93,7 @@ public class FileServer
 
     /* Cria um Directorio com o <dirName> no path */
     private boolean CreateDirectory(String path, String dirName) {
-        File theDir = new File(path + "/" + dirName);
+        File theDir = new File(path + File.separator + dirName);
 
         // Se o directorio nao existe, cria-o
         if (!theDir.exists())
@@ -136,7 +140,7 @@ public class FileServer
 
                         bout = new ByteArrayOutputStream();
                         out = new ObjectOutputStream(bout);
-                        out.writeObject(new MsgDirectoryServer(FileServer.this));
+                        out.writeObject(msg);
                         out.flush();
 
                         sendP = new DatagramPacket(bout.toByteArray(), bout.size(), addr, PORT_UDP);
@@ -231,6 +235,7 @@ public class FileServer
     class AtendeCliente extends Thread implements Observer {
         
         private Socket socket;
+        private String myUsername;
         private Boolean running;
 
         // Construtor
@@ -250,7 +255,6 @@ public class FileServer
                     ObjectInputStream in;
                     try {
                         in = new ObjectInputStream(socket.getInputStream());
-
                         Object obrec = in.readObject();
                         String msg;
 
@@ -260,11 +264,11 @@ public class FileServer
                             String[] splitted = msg.split(":");
                             switch (splitted[0]) {
                                 case "login":
-                                    executarComandoLogin(splitted);
+                                    executarComandoLogin(splitted, socket);
                                     break;
 
                                 case "logout":
-                                    executarComandoLogout(splitted);
+                                    executarComandoLogout();
                                     break;
 
                                 case "registar":
@@ -278,6 +282,10 @@ public class FileServer
                                 case "upload":
                                     executarComandoUpload(splitted);
                                     break;
+                                    
+                                case "makedir":
+                                    executarComandoMakedir(splitted);
+                                    break;
 
                                 case "exit":
                                     executarComandoExit();
@@ -287,47 +295,51 @@ public class FileServer
                             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                             out.writeObject("<EXIT>");
                             out.flush();
+                            
+                            try {
+                                socket.close();
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
                         }
+                        
+                        if (socket.isClosed() || socket == null)
+                            break;
+                    } catch (SocketException e) {
+                        System.out.println("Cliente saiu");
+                        break;
                     } catch (IOException | ClassNotFoundException ex) {
-                        ex.printStackTrace();
-                    }
-
-                    try {
-                        socket.close();
-                    } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
             }
         }
 
-        private void executarComandoLogin(String[] splittedList) {
+        private void executarComandoLogin(String[] splittedList, Socket s) {
             Cliente cli = new Cliente(splittedList[1], splittedList[2]);
+            myUsername = splittedList[1];
 
-            if (cli.getUsername() != null && cli.getPassword().equals(splittedList[2])) {
-                String username = splittedList[1];
-
+            File f = new File("Utilizadores"); // mudar directoria!
+            if (existsClientLogin(splittedList, f) && !isClientOn(myUsername)) {
                 try {
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                     outputStream.writeObject("<Login_Success>");
                     outputStream.flush();
-
-                    socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
                 // Adiciona um novo objecto do tipo TCP à lista
                 clientes.add(new TCP(socket, cli));
-                // Create user directory
-                CreateDirectory(defaultFolder, cli.getUsername());
-
+                cli.setIp(s.getInetAddress().getHostAddress());
+                cli.setPorto(s.getPort());
+                msg.getClientesOn().add(cli);
             } else {
                 try {
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                     outputStream.writeObject("<Login_Failed>");
                     outputStream.flush();
-
+                    
                     socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -345,13 +357,23 @@ public class FileServer
                 conta++;
             }
         }
+        
+        private void removeClienteHeartBeat(String username) {
+            for (Cliente c : msg.getClientesOn()) {
+                if (c.getUsername().equals(username)) {
+                    msg.getClientesOn().remove(c);
+                    return;
+                }
+            }
+        }
 
-        private void executarComandoLogout(String[] splittedList) {
+        private void executarComandoLogout() {
+            removeClienteHeartBeat(myUsername);
+            
             try {
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 ObjectOutputStream out = new ObjectOutputStream(bout);
                 DatagramSocket s = new DatagramSocket();
-                MsgLogoutToDirectory msg = new MsgLogoutToDirectory(splittedList[0], InetAddress.getByName(IP_UDP), PORT_UDP);
                 out.writeObject(msg);
 
                 DatagramPacket dp = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(IP_UDP), PORT_UDP);
@@ -368,13 +390,13 @@ public class FileServer
             } catch (IOException ex) {
             }
 
-            removeCliente(splittedList[0]);
+            removeCliente(myUsername);
         }
 
         private void executarComandoRegistar(String[] splittedList) {
             Cliente cli = new Cliente(splittedList[1], splittedList[2]);
 
-            File f = new File("ComRegistos"); // mudar directoria!
+            File f = new File("Utilizadores"); // mudar directoria!
             FileWriter fileWriter;
             BufferedWriter bw;
             PrintWriter pw;
@@ -401,15 +423,14 @@ public class FileServer
                     out.writeObject("<Regist_Success>");
                     out.flush();
 
-                    socket.close();
+                    // Create user directory
+                    CreateDirectory(defaultFolder, cli.getUsername());
                 }
                 else {
                     // Regista-se SEM sucesso
                     out = new ObjectOutputStream(socket.getOutputStream());
                     out.writeObject("<Regist_Failed>");
                     out.flush();
-
-                    socket.close();
                 }
             } catch (IOException ex) { }
         }
@@ -435,13 +456,77 @@ public class FileServer
 
             return false;
         }
+        
+        private boolean existsClientLogin(String[] splittedList, File f) {
+            if (f.exists()) {
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    StringBuilder sb = new StringBuilder();
+                    String line = br.readLine();
+
+                    while (line != null) {
+                        String[] aux = line.split(":");
+                        if (aux[0].equals(splittedList[1]) && aux[1].equals(splittedList[2]))
+                            return true;
+                        
+                        line = br.readLine();
+                    }
+                } catch (FileNotFoundException ex) {
+                } catch (IOException ex) {
+                }
+            }
+
+            return false;
+        }
+        
+        private boolean isClientOn(String username) {
+            for (TCP c : clientes) {
+                if (c.getCli().getUsername().equals(username)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
 
         private void executarComandoDownload(String[] splittedList) {
 
         }
 
         private void executarComandoUpload(String[] splittedList) {
-
+            // CRIAR FICHEIRO  upload:create_file:fileName
+            File f;
+            if (splittedList[1].equals("create_file"))
+            {
+                f = new File(defaultFolder+File.separator+myUsername+File.separator+splittedList[2]);
+                if (!f.exists()) {
+                    try {
+                        f.createNewFile();
+                        
+                        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                        outputStream.writeObject("<File_Created>");
+                        outputStream.flush(); 
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }
+        
+        private void executarComandoMakedir(String[] splitted) {
+            // Create another dir in user directory     makedir:dir
+            File f = new File(defaultFolder+File.separator+myUsername+File.separator+splitted[1]);
+            if (!f.isDirectory() && !f.exists()) {
+                CreateDirectory(defaultFolder+File.separator+myUsername, splitted[1]);
+                
+                try {
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    outputStream.writeObject("<Dir_Created>");
+                    outputStream.flush(); 
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         private void executarComandoExit() {

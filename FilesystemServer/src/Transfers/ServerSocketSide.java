@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Observer;
 import java.util.PriorityQueue;
 
-/**
- *
- * @author João
- */
 public class ServerSocketSide extends ThreadFileTranfers
 {
     private int tcp_port;
