@@ -8,21 +8,34 @@ import java.net.UnknownHostException;
 
 public class Utils implements InterfaceCli
 {
-    Socket sock;
-    static String ip;
-    static int port;
+     private Socket sock;
+     private String ip;
+     private int port;
     
+    // ALTERAR
     public Utils(String ip, int port) {
-        this.ip = ip;
-        this.port = port;
+        //this.ip = ip;
+        //this.port = port;
+        this.ip = "10.65.132.42";
+        this.port = 7000;
         
         try {
-            sock = new Socket(InetAddress.getByName(ip), port);
+            sock = new Socket(InetAddress.getByName(this.ip), this.port);
         } catch (UnknownHostException ex) {
             ex.printStackTrace();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public Socket getSock() {
+        return sock;
+    }
+    public String getIp() {
+        return ip;
+    }
+    public int getPort() {
+        return port;
     }
     
     @Override
@@ -32,11 +45,11 @@ public class Utils implements InterfaceCli
         Object obj;
         
         try {
-            in = new ObjectInputStream(sock.getInputStream());
             out = new ObjectOutputStream(sock.getOutputStream());
-            out.writeObject(username+":"+password);
+            out.writeObject("registar:"+username+":"+password);
             out.flush();
             
+            in = new ObjectInputStream(sock.getInputStream());
             obj = in.readObject();
             
             if(obj instanceof String)
@@ -65,13 +78,12 @@ public class Utils implements InterfaceCli
         Object obj;
         
         try {
-            in = new ObjectInputStream(sock.getInputStream());
             out = new ObjectOutputStream(sock.getOutputStream());
-            out.writeObject(username+":"+password);
+            out.writeObject("login:"+username+":"+password);
             out.flush();
             
+            in = new ObjectInputStream(sock.getInputStream());
             obj = in.readObject();
-            
             if(obj instanceof String)
             {
                 String str = (String) obj;
@@ -92,26 +104,24 @@ public class Utils implements InterfaceCli
     }
 
     @Override
-    public boolean logout(String username) {
+    public boolean logout() {
         ObjectInputStream in;
         ObjectOutputStream out;
         Object obj;
         
         try {
-            in = new ObjectInputStream(sock.getInputStream());
             out = new ObjectOutputStream(sock.getOutputStream());
-            out.writeObject(username+":logout");
+            out.writeObject("logout:");
             out.flush();
             
+            in = new ObjectInputStream(sock.getInputStream());
             obj = in.readObject();
             
             if(obj instanceof String)
             {
                 String str = (String) obj;
             
-                if(str.equals("<Logout_OK>"))
-                    return true;
-                return false;
+                return str.equals("<Logout_OK>");
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -135,5 +145,68 @@ public class Utils implements InterfaceCli
     @Override
     public boolean removeFile() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void getFileContent() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean makeDir(String dir) {
+        ObjectInputStream in;
+        ObjectOutputStream out;
+        Object obj;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("makedir:"+dir);
+            out.flush();
+            
+            in = new ObjectInputStream(sock.getInputStream());
+            obj = in.readObject();
+            
+            if(obj instanceof String)
+            {
+                String str = (String) obj;
+            
+                return str.equals("<Dir_Created>");
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        
+        return false;
+    }
+
+    @Override
+    public boolean createFile(String fileName) {
+        ObjectInputStream in;
+        ObjectOutputStream out;
+        Object obj;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("create_file:"+fileName);
+            out.flush();
+            
+            in = new ObjectInputStream(sock.getInputStream());
+            obj = in.readObject();
+            
+            if(obj instanceof String)
+            {
+                String str = (String) obj;
+            
+                return str.equals("<File_Created>");
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        
+        return false;
     }
 }

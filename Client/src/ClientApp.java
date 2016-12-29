@@ -1,11 +1,18 @@
 
-
 public class ClientApp extends javax.swing.JFrame
 {
+    Utils u;
+    
     /**
      * Creates new form NewApplication
      */
     public ClientApp() {
+        this.setTitle("Sistema de Ficheiros");
+        initComponents();
+    }
+    
+    public ClientApp(Utils u){
+        this.u = u;
         this.setTitle("Sistema de Ficheiros");
         initComponents();
     }
@@ -19,44 +26,58 @@ public class ClientApp extends javax.swing.JFrame
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jFileChooser1 = new javax.swing.JFileChooser();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
-        openMenuItem = new javax.swing.JMenuItem();
-        saveMenuItem = new javax.swing.JMenuItem();
-        jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
+        loginMenuItem = new javax.swing.JMenuItem();
+        logoutMenuItem = new javax.swing.JMenuItem();
+        jMenuItem1 = new javax.swing.JMenuItem();
         exitMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
         copyMenuItem = new javax.swing.JMenuItem();
-        pasteMenuItem = new javax.swing.JMenuItem();
         deleteMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         aboutMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        jFileChooser1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jFileChooser1ActionPerformed(evt);
+            }
+        });
+
         fileMenu.setMnemonic('f');
         fileMenu.setText("Ficheiro");
 
-        openMenuItem.setMnemonic('o');
-        openMenuItem.setText("Login");
-        openMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        loginMenuItem.setMnemonic('o');
+        loginMenuItem.setText("Login");
+        loginMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openMenuItemActionPerformed(evt);
+                loginMenuItemActionPerformed(evt);
             }
         });
-        fileMenu.add(openMenuItem);
+        fileMenu.add(loginMenuItem);
 
-        saveMenuItem.setMnemonic('s');
-        saveMenuItem.setText("Logout");
-        saveMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        logoutMenuItem.setMnemonic('s');
+        logoutMenuItem.setText("Logout");
+        logoutMenuItem.setEnabled(false);
+        logoutMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveMenuItemActionPerformed(evt);
+                logoutMenuItemActionPerformed(evt);
             }
         });
-        fileMenu.add(saveMenuItem);
+        fileMenu.add(logoutMenuItem);
 
-        jCheckBoxMenuItem1.setText("Registar");
-        fileMenu.add(jCheckBoxMenuItem1);
+        jMenuItem1.setText("Registar");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        fileMenu.add(jMenuItem1);
 
         exitMenuItem.setMnemonic('x');
         exitMenuItem.setText("Sair");
@@ -72,18 +93,25 @@ public class ClientApp extends javax.swing.JFrame
         editMenu.setMnemonic('e');
         editMenu.setText("Editar");
 
-        copyMenuItem.setMnemonic('y');
-        copyMenuItem.setText("Copiar");
-        editMenu.add(copyMenuItem);
-
-        pasteMenuItem.setMnemonic('p');
-        pasteMenuItem.setText("Mover");
-        pasteMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        jMenuItem2.setText("Criar ficheiro");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pasteMenuItemActionPerformed(evt);
+                jMenuItem2ActionPerformed(evt);
             }
         });
-        editMenu.add(pasteMenuItem);
+        editMenu.add(jMenuItem2);
+
+        jMenuItem3.setText("Criar nova directoria");
+        jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem3ActionPerformed(evt);
+            }
+        });
+        editMenu.add(jMenuItem3);
+
+        copyMenuItem.setMnemonic('y');
+        copyMenuItem.setText("Ver ficheiro");
+        editMenu.add(copyMenuItem);
 
         deleteMenuItem.setMnemonic('d');
         deleteMenuItem.setText("Apagar");
@@ -111,43 +139,75 @@ public class ClientApp extends javax.swing.JFrame
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 748, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jFileChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(32, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 418, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jFileChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
     
-    //Sair
+    // Sair
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
-    //Login
-    private void openMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMenuItemActionPerformed
+    // Login
+    private void loginMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginMenuItemActionPerformed
         LoginScreen l = new LoginScreen(this, rootPaneCheckingEnabled);
-        l.setVisible(true);
-    }//GEN-LAST:event_openMenuItemActionPerformed
+        this.u = l.showDialog();
+       
+        
+        if(u != null){
+            loginMenuItem.setEnabled(false);
+            logoutMenuItem.setEnabled(true);
+        }
+    }//GEN-LAST:event_loginMenuItemActionPerformed
     
-    //Registar
-    private void pasteMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pasteMenuItemActionPerformed
-        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled);
-        r.setVisible(true);
-    }//GEN-LAST:event_pasteMenuItemActionPerformed
-
+    
     private void aboutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutMenuItemActionPerformed
         About a = new About(this, rootPaneCheckingEnabled);
         a.setVisible(true);
     }//GEN-LAST:event_aboutMenuItemActionPerformed
 
-    //Logout
-    private void saveMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuItemActionPerformed
+    // Logout
+    private void logoutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutMenuItemActionPerformed
+        if (u.logout()) {
+            logoutMenuItem.setEnabled(false);
+            loginMenuItem.setEnabled(true);
+        }
+    }//GEN-LAST:event_logoutMenuItemActionPerformed
+
+    // Registar
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled);
+        r.setVisible(true);
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    // Criar ficheiro
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        CreateFile cf = new CreateFile(this, rootPaneCheckingEnabled);
+        String fileName = cf.showDialog();
+        if(fileName != null)
+            u.createFile(fileName);
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    // Criar directoria
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
         
-        
-    }//GEN-LAST:event_saveMenuItemActionPerformed
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
+
+    private void jFileChooser1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFileChooser1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jFileChooser1ActionPerformed
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -190,11 +250,13 @@ public class ClientApp extends javax.swing.JFrame
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
-    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
+    private javax.swing.JFileChooser jFileChooser1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem loginMenuItem;
+    private javax.swing.JMenuItem logoutMenuItem;
     private javax.swing.JMenuBar menuBar;
-    private javax.swing.JMenuItem openMenuItem;
-    private javax.swing.JMenuItem pasteMenuItem;
-    private javax.swing.JMenuItem saveMenuItem;
     // End of variables declaration//GEN-END:variables
 
 }

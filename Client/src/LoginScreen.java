@@ -13,8 +13,11 @@ public class LoginScreen extends javax.swing.JDialog {
     public LoginScreen(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
-        u = new Utils(Utils.ip, Utils.port);
+    }
+    
+    public Utils showDialog() {
+        setVisible(true);
+        return u;
     }
 
     /**
@@ -109,6 +112,8 @@ public class LoginScreen extends javax.swing.JDialog {
     }//GEN-LAST:event_jTFUsernameLoginActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        
+        u = new Utils(null, 0); // Para alterar ...................................................
         String username = jTFUsernameLogin.getText();
         String password = jTFPasswordLogin.getText();
         
@@ -116,10 +121,12 @@ public class LoginScreen extends javax.swing.JDialog {
         {
             JOptionPane.showMessageDialog(this, "Login efetuado.");
             
-            // IR PARA A PROXIMA JANELA
-            // ...
-            new ClientApp().setVisible(true);
+            this.setVisible(false);
             this.dispose();
+        }
+        else {
+            JOptionPane.showMessageDialog(this, "Login sem sucesso.");
+            u = null;
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
