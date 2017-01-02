@@ -1,9 +1,5 @@
-package com.company;
-
 import java.io.*;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
@@ -38,6 +34,16 @@ public class ThreadAtendeCliente extends Thread {
         this.running = true;
     }
 
+    public boolean verify(ArrayList<Server> serverList, String name) {
+        for(Server srv : serverList) {
+            if(srv.getServerName().equals(name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public void run() {
 
@@ -46,15 +52,16 @@ public class ThreadAtendeCliente extends Thread {
         synchronized (running) {
             do {
                 try {
-                    packet = new DatagramPacket(new byte[MAX_BYTES], MAX_BYTES);
-                    this.trataHb.getSdSocket().receive(packet);
 
-                    //this.trataHb.setClSocket(new DatagramSocket(packet.getPort()));
+                    byte[] arr = new byte[MAX_BYTES];
+                    packet = new DatagramPacket(arr, MAX_BYTES);
+                    this.trataHb.getSdSocket().receive(packet);
 
                     address = packet.getAddress();
                     port = packet.getPort();
 
-                    this.recv = new ObjectInputStream(new ByteArrayInputStream(packet.getData(), 0, packet.getLength()));
+                    //this.recv = new ObjectInputStream(new ByteArrayInputStream(packet.getData(), 0, packet.getLength()));
+                    this.recv = new ObjectInputStream(new ByteArrayInputStream(arr));
                     msg = recv.readObject();
 
                     if(msg instanceof String) {
@@ -74,7 +81,7 @@ public class ThreadAtendeCliente extends Thread {
                             out.flush();
 
                             DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
-                            trataHb.getClSocket().send(p);
+                            this.trataHb.getSdSocket().send(p);
 
                             System.out.println("[INFO] - Enviei packet para cliente.");
                         }
@@ -88,8 +95,8 @@ public class ThreadAtendeCliente extends Thread {
 
                         ArrayList<Server> serverList = trataHb.getServerList();
 
-                        if(!serverList.contains(hb.getServerName())) {
-                            Server newServer = new Server(hb.getServerName(), hb.getClientesOn(), address.toString(), port);
+                        if (!verify(serverList, hb.getServerName())) {
+                            Server newServer = new Server(hb.getServerName(), hb.getClientesOn(), address.toString(), port, hb.getPortTCP());
                             trataHb.addToServerList(newServer);
                             System.out.println("[INFO] - Adicionei servidor a lista.");
                         }
@@ -102,5 +109,4 @@ public class ThreadAtendeCliente extends Thread {
             } while (this.running);
         }
     }
-
 }

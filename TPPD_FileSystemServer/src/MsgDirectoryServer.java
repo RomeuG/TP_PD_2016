@@ -1,5 +1,4 @@
-package com.company;
-
+import Communication.Cliente;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -8,11 +7,13 @@ public class MsgDirectoryServer implements Serializable
     private static final long serialVersionUID = 10127L;
 
     private String serverName;
-    ArrayList<Cliente> clientesOn;
+    private ArrayList<Cliente> clientesOn;
+    private int portTCP;
 
-    public MsgDirectoryServer(String serverName, ArrayList<Cliente> clientesOn) {
+    public MsgDirectoryServer(String serverName, ArrayList<Cliente> clientesOn, int portTCP) {
         this.serverName = serverName;
         this.clientesOn = clientesOn;
+        this.portTCP = portTCP;
     }
 
     public String getServerName() {
@@ -29,5 +30,13 @@ public class MsgDirectoryServer implements Serializable
 
     public void setClientesOn(ArrayList<Cliente> clientesOn) {
         this.clientesOn = clientesOn;
+    }
+
+    public int getPortTCP() {
+        return portTCP;
+    }
+
+    public void setPortTCP(int portTCP) {
+        this.portTCP = portTCP;
     }
 }
