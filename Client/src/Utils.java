@@ -18,7 +18,7 @@ public class Utils implements InterfaceCli
         this.port = port;
         
         try {
-            sock = new Socket(InetAddress.getByName(this.ip), this.port);
+            sock = new Socket(InetAddress.getByName(this.ip.substring(1, this.ip.length())), this.port);
         } catch (UnknownHostException ex) {
             ex.printStackTrace();
         } catch (IOException ex) {
@@ -206,5 +206,38 @@ public class Utils implements InterfaceCli
         }
         
         return false;
+    }
+
+    @Override
+    public DirectoryInfo changeWorkingDirectory(String path) {
+        ObjectInputStream in;
+        ObjectOutputStream out;
+        Object obj;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("change_dir:"+path);
+            out.flush();
+            
+            in = new ObjectInputStream(sock.getInputStream());
+            obj = in.readObject();
+            
+            if(obj instanceof DirectoryInfo) {
+                DirectoryInfo dir = (DirectoryInfo) obj;
+            
+                return dir;
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        
+        return null;
+    }
+
+    @Override
+    public void getWorkingDirContent() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

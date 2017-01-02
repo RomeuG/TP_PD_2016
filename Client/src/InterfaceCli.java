@@ -6,8 +6,8 @@ public interface InterfaceCli
     public boolean logout();
     public boolean copyFile();
     public boolean moveFile();
-    //public void changeWorkingDirectory();
-    //public void getWorkingDirContent();
+    public DirectoryInfo changeWorkingDirectory(String path);
+    public void getWorkingDirContent();
    // public void getWorkingDirPath();
     public void getFileContent();
     public boolean removeFile();
