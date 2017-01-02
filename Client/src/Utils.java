@@ -12,12 +12,10 @@ public class Utils implements InterfaceCli
      private String ip;
      private int port;
     
-    // ALTERAR
+     
     public Utils(String ip, int port) {
-        //this.ip = ip;
-        //this.port = port;
-        this.ip = "10.65.132.42";
-        this.port = 7000;
+        this.ip = ip;
+        this.port = port;
         
         try {
             sock = new Socket(InetAddress.getByName(this.ip), this.port);

@@ -19,6 +19,7 @@ public class RegistarScreen extends javax.swing.JDialog {
     public static final int RET_OK = 1;
 
     Utils u;
+    Server srv;
     
     /**
      * Creates new form RegistarScreen
@@ -26,6 +27,23 @@ public class RegistarScreen extends javax.swing.JDialog {
     public RegistarScreen(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        // Close the dialog when Esc is pressed
+        String cancelName = "cancel";
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
+        ActionMap actionMap = getRootPane().getActionMap();
+        actionMap.put(cancelName, new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                doClose(RET_CANCEL);
+            }
+        });
+    }
+    
+    public RegistarScreen(java.awt.Frame parent, boolean modal, Server srv) {
+        super(parent, modal);
+        initComponents();
+        this.srv = srv;
 
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
@@ -177,7 +195,7 @@ public class RegistarScreen extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        u = new Utils(null, 0); //para alterar ...................................................
+        u = new Utils(srv.getAddress(), srv.getPort());
         if (jPass1.getText().equals(jPass2.getText())) {
             if (u.register(jUsername.getText(), jPass1.getText()))
             {

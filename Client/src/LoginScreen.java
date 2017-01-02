@@ -4,15 +4,21 @@ import javax.swing.JOptionPane;
 
 public class LoginScreen extends javax.swing.JDialog {
 
-    /**
-     * Creates new form LoginScreen
-     */
-    
     Utils u;
+    String ip;
+    int porto;
     
     public LoginScreen(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+    }
+    
+    public LoginScreen(java.awt.Frame parent, boolean modal, Server srv) {
+        super(parent, modal);
+        initComponents();
+        
+        ip = srv.getAddress();
+        porto = srv.getPort();
     }
     
     public Utils showDialog() {
@@ -113,7 +119,7 @@ public class LoginScreen extends javax.swing.JDialog {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         
-        u = new Utils(null, 0); // Para alterar ...................................................
+        u = new Utils(ip, porto);
         String username = jTFUsernameLogin.getText();
         String password = jTFPasswordLogin.getText();
         

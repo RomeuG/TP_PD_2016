@@ -5,21 +5,26 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.List;
+import javax.swing.DefaultListModel;
 
 public class ServerList extends javax.swing.JFrame 
 {
-    List<ServerInfo> lista;
+    InfoParaCliente info = null;
     DatagramSocket s;
     DatagramPacket p;
     ByteArrayInputStream bin;
     ByteArrayOutputStream bout;
     ObjectInputStream in;
     ObjectOutputStream out;
-    int tamanho;
+    Object servInfo = null;
+    String ipServDir = "127.0.0.1";
+    int portoServDir = 1338;
+    DefaultListModel<String> listModel;
     
     /**
      * Creates new form ServerList
@@ -27,36 +32,47 @@ public class ServerList extends javax.swing.JFrame
     public ServerList() {
         initComponents();
         
+        listModel = new DefaultListModel<>();
         
         try {
-            // enviar pacote UDP para o Serviço de Directoria
+            // Enviar pacote UDP para o Serviço de Directoria
             s = new DatagramSocket();
-            s.setSoTimeout(10000);
+            s.setSoTimeout(30000);
         
             bout = new ByteArrayOutputStream();
             out = new ObjectOutputStream(bout);
             out.writeObject("<QUERO_LISTA>");
             out.flush();
             
-            //p = new DatagramPacket(bout.toByteArray(), bout.size(), ipServicoDirectoria, portServicoDirecotria);
+            p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(ipServDir), portoServDir);
             s.send(p);
         
-            // recebe objecto - tamanho da lista
-            p = new DatagramPacket(new byte[1024], 1024);
+            // Recebe objecto
+            p = new DatagramPacket(new byte[4096], 4096);
             s.receive(p);
             
             in = new ObjectInputStream(new ByteArrayInputStream(p.getData(), 0, p.getLength()));
-            tamanho = (Integer) in.readObject();
+            servInfo = in.readObject();
             
-            // recebe objeto - lista
-            p = new DatagramPacket(new byte[tamanho], tamanho);
-            s.receive(p);
+            if (servInfo instanceof InfoParaCliente)
+            {
+                info = (InfoParaCliente) servInfo;
+                
+                if (info.getListaServers().isEmpty())
+                    jBtnLigar.setEnabled(false);
+                else
+                    jBtnLigar.setEnabled(true);
+                
+                for (Server s : info.getListaServers()) {
+                    listModel.addElement(s.getServerName());
+                }
+                
+                jServList.setModel(listModel);
+            }
+            else
+                jBtnLigar.setEnabled(false);
             
-            in = new ObjectInputStream(new ByteArrayInputStream(p.getData(), 0, p.getLength()));
-            List<ServerInfo> lista = (List<ServerInfo>) in.readObject();
-            
-            //System.out.println(lista.get(i));
-        
+            System.out.println("Cheguei AQUI !");     
         } catch(UnknownHostException e) {
             System.out.println("Erro " + e);
         } catch(SocketTimeoutException e) {
@@ -80,21 +96,21 @@ public class ServerList extends javax.swing.JFrame
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jLServerList = new javax.swing.JList();
+        jServList = new javax.swing.JList();
         jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        jBtnLigar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Servidores");
 
-        jScrollPane1.setViewportView(jLServerList);
+        jScrollPane1.setViewportView(jServList);
 
         jButton1.setText("Cancelar");
 
-        jButton2.setText("Ligar");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        jBtnLigar.setText("Ligar");
+        jBtnLigar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                jBtnLigarActionPerformed(evt);
             }
         });
 
@@ -108,7 +124,7 @@ public class ServerList extends javax.swing.JFrame
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton2)
+                .addComponent(jBtnLigar)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
                 .addContainerGap())
@@ -121,19 +137,20 @@ public class ServerList extends javax.swing.JFrame
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
-                    .addComponent(jButton2))
+                    .addComponent(jBtnLigar))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void jBtnLigarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtnLigarActionPerformed
         // Ligar a um Servidor!
+        int index = jServList.getSelectedIndex();
         
-        new ClientApp().setVisible(true);
+        new ClientApp(info.getListaServers().get(index)).setVisible(true);
         this.dispose();
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_jBtnLigarActionPerformed
 
 
     public static void main(String args[]) {
@@ -169,9 +186,9 @@ public class ServerList extends javax.swing.JFrame
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jBtnLigar;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JList jLServerList;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JList jServList;
     // End of variables declaration//GEN-END:variables
 }
