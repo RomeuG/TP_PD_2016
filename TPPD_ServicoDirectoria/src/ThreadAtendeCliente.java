@@ -11,7 +11,6 @@ public class ThreadAtendeCliente extends Thread {
     private final static int MAX_BYTES = 10000;
 
     private final static String LISTA = "<QUERO_LISTA>";
-    private final static String LISTA = "<QUERO_CLIENT>";
 
     TrataHeartBeat trataHb;
     DatagramPacket packet;
@@ -84,33 +83,59 @@ public class ThreadAtendeCliente extends Thread {
                             DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
                             this.trataHb.getSdSocket().send(p);
 
-                            System.out.println("[INFO] - Enviei packet para cliente.");
+                            System.out.println("[INFO] - Enviei InfoParaCliente.");
                         }
-
                     } else if(msg instanceof MSGClients) {
-                        bout = new ByteArrayOutputStream();
-                        out = new ObjectOutputStream(bout);
+                        MSGClients _msg = (MSGClients) msg;
 
-                        out.writeObject();
-                        out.flush();
+                        for(int i = 0; i < trataHb.getServerList().size(); i++) {
+                            if(trataHb.getServerList().get(i).getServerName().equals(_msg.getServerName())) {
+                                MsgListaClientes lista = new MsgListaClientes(trataHb.getServerList().get(i).getClientesOn());
 
-                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
-                        this.trataHb.getSdSocket().send(p);
+                                bout = new ByteArrayOutputStream();
+                                out = new ObjectOutputStream(bout);
 
-                        System.out.println("[INFO] - Enviei packet para cliente.");
+                                out.writeObject(lista);
+                                out.flush();
 
+                                DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
+                                this.trataHb.getSdSocket().send(p);
+
+                                System.out.println("[INFO] - Enviei MsgListaClientes.");
+                            }
+                        }
                     } else if(msg instanceof MSGToCliente) {
-                        bout = new ByteArrayOutputStream();
-                        out = new ObjectOutputStream(bout);
+                        String _a;
+                        int _p;
 
-                        out.writeObject();
-                        out.flush();
+                        MSGToCliente _msg = (MSGToCliente) msg;
 
-                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
-                        this.trataHb.getSdSocket().send(p);
+                        for(int i = 0; i < trataHb.getServerList().size(); i++)
+                        {
+                            if(trataHb.getServerList().get(i).getServerName().equals(_msg.getServerName())) {
+                                for (int f = 0; f < trataHb.getServerList().get(i).getClientesOn().size(); i++) {
+                                    if (trataHb.getServerList().get(i).getClientesOn().get(f).equals(_msg.getDestinatario())) {
+                                        _a = trataHb.getServerList().get(i).getClientesOn().get(f).getIp();
+                                        _p = trataHb.getServerList().get(i).getClientesOn().get(f).getPorto();
 
-                        System.out.println("[INFO] - Enviei packet para cliente.");
+                                        bout = new ByteArrayOutputStream();
+                                        out = new ObjectOutputStream(bout);
 
+                                        out.writeObject(_msg);
+                                        out.flush();
+
+                                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(_a), _p);
+                                        this.trataHb.getSdSocket().send(p);
+
+                                        System.out.println("[INFO] - Enviei MSGToCliente.");
+
+                                        break;
+                                    }
+                                }
+
+                                break;
+                            }
+                        }
                     } else if(msg instanceof MsgDirectoryServer) {
 
                         System.out.println("[INFO] - Recebi heartbeat do servidor.");
