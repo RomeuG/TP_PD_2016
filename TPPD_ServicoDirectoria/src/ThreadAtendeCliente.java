@@ -11,6 +11,7 @@ public class ThreadAtendeCliente extends Thread {
     private final static int MAX_BYTES = 10000;
 
     private final static String LISTA = "<QUERO_LISTA>";
+    private final static String LISTA = "<QUERO_CLIENT>";
 
     TrataHeartBeat trataHb;
     DatagramPacket packet;
@@ -85,6 +86,31 @@ public class ThreadAtendeCliente extends Thread {
 
                             System.out.println("[INFO] - Enviei packet para cliente.");
                         }
+
+                    } else if(msg instanceof MSGClients) {
+                        bout = new ByteArrayOutputStream();
+                        out = new ObjectOutputStream(bout);
+
+                        out.writeObject();
+                        out.flush();
+
+                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
+                        this.trataHb.getSdSocket().send(p);
+
+                        System.out.println("[INFO] - Enviei packet para cliente.");
+
+                    } else if(msg instanceof MSGToCliente) {
+                        bout = new ByteArrayOutputStream();
+                        out = new ObjectOutputStream(bout);
+
+                        out.writeObject();
+                        out.flush();
+
+                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
+                        this.trataHb.getSdSocket().send(p);
+
+                        System.out.println("[INFO] - Enviei packet para cliente.");
+
                     } else if(msg instanceof MsgDirectoryServer) {
 
                         System.out.println("[INFO] - Recebi heartbeat do servidor.");

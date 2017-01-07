@@ -1,8 +1,5 @@
 import java.io.Serializable;
 
-/**
- * Created by romeu on 12/31/16.
- */
 public class Cliente implements Serializable {
 
     private String username;

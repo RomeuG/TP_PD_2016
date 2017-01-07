@@ -1,9 +1,6 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
-/**
- * Created by romeu on 12/31/16.
- */
 public class InfoParaCliente implements Serializable {
 
     private ArrayList<Server> listaServers;

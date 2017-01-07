@@ -1,9 +1,6 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
-/**
- * Created by romeu on 12/31/16.
- */
 public class Server implements Serializable {
 
     private static final long serialVersionUID = 10128L;
