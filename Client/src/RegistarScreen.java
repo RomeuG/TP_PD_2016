@@ -195,6 +195,9 @@ public class RegistarScreen extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+        System.out.println("Addr: "+srv.getAddress());
+        System.out.println("Port: "+srv.getPort());
+        
         u = new Utils(srv.getAddress(), srv.getPort());
         if (jPass1.getText().equals(jPass2.getText())) {
             if (u.register(jUsername.getText(), jPass1.getText()))

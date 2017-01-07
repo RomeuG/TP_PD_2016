@@ -1,16 +1,124 @@
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
 
+public class Chat extends javax.swing.JFrame {
 
-public class Chat extends javax.swing.JFrame 
-{
-    byte [] buf;
-    
-    /**
-     * Creates new form Chat
-     */
-    public Chat() {
+    HashMap<String, ArrayList<MSGToCliente>> historico;
+    String username;
+    String destinatario;
+    String serverName;
+    String udpIp;
+    int udpPort;
+    byte[] buf;
+    DefaultListModel<String> listModel;
+    DefaultListModel<String> listModelClientes;
+
+    public Chat(String username, String serverName, String ipUdp, int udpPort) {
+        this.username = username;
+        this.serverName = serverName;
+        this.udpIp = ipUdp;
+        this.udpPort = udpPort;
+
         initComponents();
+
+        listModel = new DefaultListModel<>();
+        listModelClientes = new DefaultListModel<>();
+        jListClientes.setModel(listModelClientes);
+        jListChat.setModel(listModel);
+        historico = new HashMap<>();
+        RcvMsg m = new RcvMsg();
+        m.start();
+
+        MSGClients msg = new MSGClients(serverName);
+
+        DatagramSocket socket = null;
+        try {
+            socket = new DatagramSocket();
+
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            ObjectOutputStream out = new ObjectOutputStream(bout);
+            out.writeObject(msg);
+            out.flush();
+
+            DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(udpIp), udpPort);
+            socket.send(p);
+
+        } catch (SocketException | UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException ex) {
+            Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    class RcvMsg extends Thread {
+
+        DatagramSocket socket;
+        DatagramPacket p;
+
+        @Override
+        public void run() {
+
+            try {
+                socket = new DatagramSocket();
+            } catch (SocketException ex) {
+                ex.printStackTrace();
+            }
+            while (true) {
+                try {
+                    p = new DatagramPacket(new byte[4096], 4096);
+                    socket.receive(p);
+
+                    ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(p.getData(), 0, p.getLength()));
+                    Object o = in.readObject();
+                    if (o instanceof MsgListaClientes) {
+                        MsgListaClientes lista = (MsgListaClientes) o;
+
+                        listModelClientes = new DefaultListModel<>();
+                        for (Cliente c : lista.getListaClientes()) {
+                            listModelClientes.addElement(c.getUsername());
+                        }
+
+                    } else if (o instanceof MSGToCliente) {
+                        MSGToCliente msg = (MSGToCliente) o;
+                        Object ob = historico.get(msg.getRementente());
+                        if (ob != null) {
+                            ArrayList ar = historico.get(msg.getRementente());
+                            ar.add(msg);
+                            historico.put(msg.getRementente(), ar);
+                        } else {
+                            historico.put(msg.getRementente(), new ArrayList<>());
+                            historico.get(msg.getRementente()).add(msg);
+                        }
+                        if (username.equals(msg.getRementente())) {
+                            listModel.addElement(msg.getRementente() + ": " + msg.getMensagem());
+                            int lastIndex = jListChat.getModel().getSize() - 1;
+                            if (lastIndex >= 0) {
+                                jListChat.ensureIndexIsVisible(lastIndex);
+                            }
+                        }
+                    }
+
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
     }
 
     /**
@@ -23,38 +131,49 @@ public class Chat extends javax.swing.JFrame
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList = new javax.swing.JList();
+        jListClientes = new javax.swing.JList();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTextArea2 = new javax.swing.JTextArea();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
-        jButton1 = new javax.swing.JButton();
+        jTextAreaMsg = new javax.swing.JTextArea();
+        jButtonSend = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jListChat = new javax.swing.JList<>();
+        labelClienteName = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Chat");
 
-        jList.setModel(new javax.swing.AbstractListModel() {
+        jListClientes.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane1.setViewportView(jList);
-
-        jTextArea2.setColumns(20);
-        jTextArea2.setRows(5);
-        jScrollPane3.setViewportView(jTextArea2);
-
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane2.setViewportView(jTextArea1);
-
-        jButton1.setText("Enviar");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+        jListClientes.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                jListClientesValueChanged(evt);
             }
         });
+        jScrollPane1.setViewportView(jListClientes);
+
+        jTextAreaMsg.setColumns(20);
+        jTextAreaMsg.setRows(5);
+        jScrollPane3.setViewportView(jTextAreaMsg);
+
+        jButtonSend.setText("Enviar");
+        jButtonSend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSendActionPerformed(evt);
+            }
+        });
+
+        jListChat.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane4.setViewportView(jListChat);
+
+        labelClienteName.setText("Escolher um cliente");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -65,19 +184,26 @@ public class Chat extends javax.swing.JFrame
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane2))
+                        .addComponent(jButtonSend, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jScrollPane4)))
                 .addContainerGap())
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(labelClienteName)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(3, 3, 3)
-                .addComponent(jScrollPane2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(labelClienteName)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 336, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)))
+                    .addComponent(jButtonSend, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -94,21 +220,77 @@ public class Chat extends javax.swing.JFrame
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(0, 28, Short.MAX_VALUE))
+                .addGap(0, 12, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     // Envia mensagem via UDP para outro cliente da lista
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        DatagramSocket s = new DatagramSocket();
-        DatagramPacket p = new DatagramPacket(buf[1024], 1024);
-        
-        
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void jButtonSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSendActionPerformed
+        String text = jTextAreaMsg.getText();
+        enviarMensagem(text);
+        jTextAreaMsg.setText("");
+    }//GEN-LAST:event_jButtonSendActionPerformed
+
+    private void jListClientesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListClientesValueChanged
+        int index = jListClientes.getSelectedIndex();
+        destinatario = listModelClientes.get(index);
+        jTextAreaMsg.setText("");
+        listModel = new DefaultListModel<>();
+        jListChat.setModel(listModel);
+        setAllMessages(destinatario);
+        labelClienteName.setText(destinatario);
+    }//GEN-LAST:event_jListClientesValueChanged
+
+    public void setAllMessages(String destinario) {
+        if (historico.get(destinario) != null) {
+            if (!historico.get(destinario).isEmpty()) {
+                for (MSGToCliente msg : historico.get(destinario)) {
+                    listModel.addElement(msg.getRementente() + ": " + msg.getMensagem());
+                }
+            }
+        }
+    }
+
+    public void enviarMensagem(String msg) {
+        listModel.addElement(username + ": " + msg);
+        int lastIndex = jListChat.getModel().getSize() - 1;
+        if (lastIndex >= 0) {
+            jListChat.ensureIndexIsVisible(lastIndex);
+        }
+        try {
+            MSGToCliente msgToSend = new MSGToCliente(destinatario, username, msg, serverName);
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream(6400);
+            final ObjectOutputStream oos;
+
+            oos = new ObjectOutputStream(baos);
+
+            oos.writeObject(msgToSend);
+            final byte[] data = baos.toByteArray();
+
+            DatagramSocket socket = new DatagramSocket();
+            DatagramPacket dpack = new DatagramPacket(data, data.length, InetAddress.getByName(udpIp), udpPort);
+            socket.send(dpack);
+
+            Object ob = historico.get(msgToSend.getDestinatario());
+            if (ob != null) {
+                ArrayList ar = historico.get(msgToSend.getDestinatario());
+                ar.add(msg);
+                historico.put(msgToSend.getDestinatario(), ar);
+            } else {
+                historico.put(msgToSend.getDestinatario(), new ArrayList<>());
+                historico.get(msgToSend.getDestinatario()).add(msgToSend);
+            }
+
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -137,19 +319,20 @@ public class Chat extends javax.swing.JFrame
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Chat().setVisible(true);
+                new Chat("username", "serverName", "ipUdp", 1).setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JList jList;
+    private javax.swing.JButton jButtonSend;
+    private javax.swing.JList<String> jListChat;
+    private javax.swing.JList jListClientes;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JTextArea jTextArea2;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JTextArea jTextAreaMsg;
+    private javax.swing.JLabel labelClienteName;
     // End of variables declaration//GEN-END:variables
 }

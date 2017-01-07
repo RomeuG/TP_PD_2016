@@ -125,6 +125,7 @@ public class LoginScreen extends javax.swing.JDialog {
         
         if (u.login(username, password) == true)
         {
+            u.setUsername(username);
             JOptionPane.showMessageDialog(this, "Login efetuado.");
             
             this.setVisible(false);

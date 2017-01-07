@@ -8,10 +8,10 @@ import java.net.UnknownHostException;
 
 public class Utils implements InterfaceCli
 {
-     private Socket sock;
-     private String ip;
-     private int port;
-    
+    private Socket sock;
+    private String ip;
+    private int port;
+    private String username;
      
     public Utils(String ip, int port) {
         this.ip = ip;
@@ -24,6 +24,14 @@ public class Utils implements InterfaceCli
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Socket getSock() {

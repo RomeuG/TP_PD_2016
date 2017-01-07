@@ -45,6 +45,7 @@ public class ClientApp extends javax.swing.JFrame
         loginMenuItem = new javax.swing.JMenuItem();
         logoutMenuItem = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
+        jChat = new javax.swing.JMenuItem();
         exitMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
@@ -61,9 +62,11 @@ public class ClientApp extends javax.swing.JFrame
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
+        jList.setEnabled(false);
         jScrollPane1.setViewportView(jList);
 
         jButton1.setText("->");
+        jButton1.setEnabled(false);
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -71,6 +74,7 @@ public class ClientApp extends javax.swing.JFrame
         });
 
         jButton2.setText("<-");
+        jButton2.setEnabled(false);
 
         fileMenu.setMnemonic('f');
         fileMenu.setText("Ficheiro");
@@ -101,6 +105,15 @@ public class ClientApp extends javax.swing.JFrame
             }
         });
         fileMenu.add(jMenuItem1);
+
+        jChat.setText("Chat");
+        jChat.setEnabled(false);
+        jChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jChatActionPerformed(evt);
+            }
+        });
+        fileMenu.add(jChat);
 
         exitMenuItem.setMnemonic('x');
         exitMenuItem.setText("Sair");
@@ -198,9 +211,13 @@ public class ClientApp extends javax.swing.JFrame
         LoginScreen l = new LoginScreen(this, rootPaneCheckingEnabled, srv);
         this.u = l.showDialog();
         
-        if(u != null){
+        if (u != null) {
             loginMenuItem.setEnabled(false);
             logoutMenuItem.setEnabled(true);
+            jList.setEnabled(true);
+            jButton1.setEnabled(true);
+            jButton2.setEnabled(true);
+            jChat.setEnabled(true);
         }
     }//GEN-LAST:event_loginMenuItemActionPerformed
     
@@ -272,6 +289,12 @@ public class ClientApp extends javax.swing.JFrame
         jList.setModel(listModel);
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    // CHAT
+    private void jChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jChatActionPerformed
+        Chat c = new Chat(u.getUsername(), srv.getServerName(), "127.0.0.1", 1338);
+        c.setVisible(true);
+    }//GEN-LAST:event_jChatActionPerformed
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -315,6 +338,7 @@ public class ClientApp extends javax.swing.JFrame
     private javax.swing.JMenu helpMenu;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JMenuItem jChat;
     private javax.swing.JList jList;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
