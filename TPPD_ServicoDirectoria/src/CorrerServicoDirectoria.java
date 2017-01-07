@@ -27,15 +27,30 @@ public class CorrerServicoDirectoria extends UnicastRemoteObject implements GetR
     }
 
     @Override
-    public void addObserver(GetRemoteFileObserverInterface observer) throws RemoteException {
-
+    public synchronized void addObserver(GetRemoteFileObserverInterface observer) throws RemoteException {
+        if(!observers.contains(observer)){
+            observers.add(observer);
+            System.out.println("+ um observador.");
+        }
     }
 
     @Override
-    public void removeObserver(GetRemoteFileObserverInterface observer) throws RemoteException {
-
+    public synchronized void removeObserver(GetRemoteFileObserverInterface observer) throws RemoteException {
+        if(observers.remove(observer))
+            System.out.println("- um observador.");
     }
 
+    public synchronized void notifyObservers(String msg)
+    {
+        for(int i = 0; i < observers.size(); i++) {
+            try {
+                observers.get(i).notifyNewOperationConcluded(msg);
+            } catch(RemoteException e) {
+                observers.remove(i--);
+                System.out.println("- um observador (observador inacessivel).");
+            }
+        }
+    }
 
     public static void main(String[] args) {
         thb = new TrataHeartBeat();
