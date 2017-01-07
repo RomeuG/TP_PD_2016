@@ -1,5 +1,7 @@
 import java.io.FileInputStream;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -47,13 +49,46 @@ public class CorrerServicoDirectoria extends UnicastRemoteObject implements GetR
                 observers.get(i).notifyNewOperationConcluded(msg);
             } catch(RemoteException e) {
                 observers.remove(i--);
-                System.out.println("- um observador (observador inacessivel).");
+                System.out.println("Observador eliminado por estar inacessivel");
             }
         }
     }
 
     public static void main(String[] args) {
         thb = new TrataHeartBeat();
+
+        Registry r;
+
+        try{
+            try{
+
+                System.out.println("Tentativa de lancamento do registry no porto " +
+                        Registry.REGISTRY_PORT + "...");
+
+                r = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+
+                System.out.println("Registry lancado!");
+
+            }catch(RemoteException e){
+                System.out.println("Registry provavelmente ja' em execucao!");
+                r = LocateRegistry.getRegistry();
+            }
+
+            CorrerServicoDirectoria fileService = new CorrerServicoDirectoria();
+
+            System.out.println("Servico GetRemoteFile criado e em execucao ("+fileService.getRef().remoteToString()+"...");
+
+            r.bind(SERVICE_NAME, fileService);
+
+            System.out.println("Servico " + SERVICE_NAME + " registado no registry...");
+
+        }catch(RemoteException e){
+            System.out.println("Erro remoto - " + e);
+            System.exit(1);
+        }catch(Exception e){
+            System.out.println("Erro - " + e);
+            System.exit(1);
+        }
     }
 
 }
