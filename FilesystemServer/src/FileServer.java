@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -21,14 +20,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.regex.Pattern;
 
-public class FileServer {
+public class FileServer 
+{
     /* IP/Porto TCP e Nome do Servidor */
-
     private int PORT_TCP = 5001;
     private String IP_TCP;
     private String nomeServer;
@@ -73,24 +75,24 @@ public class FileServer {
         try {
             msg = new MsgDirectoryServer(getNomeServer(), new ArrayList<>(), PORT_TCP);
             tHeartBeat = new NotificationThread();
-            tHeartBeat.setDaemon(true); //Pode dar problemas
+            tHeartBeat.setDaemon(true);
             tHeartBeat.start();
         } catch (SocketException | UnknownHostException e) {
-            e.printStackTrace();
+            System.out.println("Erro " + e);
         }
 
         try {
             tAtende = new AtendeClientes();
             tAtende.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Erro " + e);
         }
 
         // Encerrar todas as Threads a correr
         try {
             tAtende.join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("Erro " + e);
         }
 
         System.out.println("[Remote Server] shutdown");
@@ -162,7 +164,7 @@ public class FileServer {
                 try {
                     sleep(30000);
                 } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                    System.out.println("Erro " + ex);
                 }
             }
         }
@@ -217,7 +219,7 @@ public class FileServer {
                     clientThreads.get(i).setRunning(false);
                     clientThreads.get(i).join();
                 } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                    System.out.println("Erro " + ex);
                 }
             }
             try {
@@ -292,6 +294,18 @@ public class FileServer {
                                     case "change_dir":
                                         executarComandoChangeDir(splitted);
                                         break;
+                                        
+                                    case "cp":
+                                        executarComandoCopiar(splitted);
+                                        break;
+                                        
+                                    case "mv":
+                                        executarComandoMover(splitted);
+                                        break;
+                                        
+                                    case "rm":
+                                        executarComandoRemove(splitted);
+                                        break;
 
                                     case "exit":
                                         executarComandoExit();
@@ -306,7 +320,7 @@ public class FileServer {
                             try {
                                 socket.close();
                             } catch (IOException ex) {
-                                ex.printStackTrace();
+                                System.out.println("Erro a tentar fechar o socket: " + ex);
                             }
                         }
 
@@ -317,12 +331,12 @@ public class FileServer {
                         System.out.println("Cliente saiu");
                         break;
                     } catch (IOException | ClassNotFoundException ex) {
-                        ex.printStackTrace();
+                        System.out.println("Erro " + ex);
                     }
                 }
             //}
                 
-                System.out.println("VOU SAIR ");
+                System.out.println("VOU SAIR");
         }
 
         private void executarComandoLogin(String[] splittedList, Socket s) {
@@ -363,7 +377,7 @@ public class FileServer {
                         return;
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("Erro " + e);
                 }
 
                 // Adiciona um novo objecto do tipo TCP à lista
@@ -378,7 +392,7 @@ public class FileServer {
 
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("Erro " + e);
                 }
             }
         }
@@ -421,8 +435,11 @@ public class FileServer {
                 s.close();
                 socket.close();
             } catch (SocketException ex) {
+                System.out.println("Erro " + ex);
             } catch (UnknownHostException ex) {
+                System.out.println("Erro " + ex);
             } catch (IOException ex) {
+                System.out.println("Erro " + ex);
             }
 
             removeCliente(myUsername);
@@ -500,6 +517,7 @@ public class FileServer {
                     out.flush();
                 }
             } catch (IOException ex) {
+                System.out.println("Erro " + ex);
             }
         }
 
@@ -519,7 +537,9 @@ public class FileServer {
                         line = br.readLine();
                     }
                 } catch (FileNotFoundException ex) {
+                    System.out.println("Erro " + ex);
                 } catch (IOException ex) {
+                    System.out.println("Erro " + ex);
                 }
             }
 
@@ -542,7 +562,9 @@ public class FileServer {
                         line = br.readLine();
                     }
                 } catch (FileNotFoundException ex) {
+                    System.out.println("Erro " + ex);
                 } catch (IOException ex) {
+                    System.out.println("Erro " + ex);
                 }
             }
 
@@ -562,35 +584,46 @@ public class FileServer {
         private void executarComandoDownload(String[] splittedList) {
             // download:pathFile
             File file = new File(defaultFolder + File.separator + myUsername + File.separator + splittedList[1]);
-            
-            if (file.isFile())
-            {
-                MsgSendFile msgs = new MsgSendFile(true);
-                
+
+            if (file.isFile()) {
                 try {
                     // Get the size of the file
                     long length = file.length();
-                    byte[] bytes = new byte[4096];
-                    InputStream in = new FileInputStream(file);
-                    ObjectOutputStream out;
 
-                    int count;
-                    while ((count = in.read(bytes)) > 0) {
-                        msgs.setArr(bytes);
-                        out = new ObjectOutputStream(socket.getOutputStream());
-                        out.writeObject(msgs);
+                    ObjectOutputStream ob = new ObjectOutputStream(socket.getOutputStream());
+                    Long size = length;
+                    ob.writeObject(size);
+                    ob.flush();
+                    
+                    FileInputStream requestedFileInputStream = null;
+                    requestedFileInputStream = new FileInputStream(file.getCanonicalPath());
+                    System.out.println("Ficheiro " + file.getCanonicalPath() + " aberto para leitura.");
+
+                    int nbytes;
+                    byte []fileChunck = new byte[1024];
+                    OutputStream out = socket.getOutputStream();
+
+                    while ((nbytes = requestedFileInputStream.read(fileChunck)) > 0) {
+                        out.write(fileChunck, 0, nbytes);
                         out.flush();
                     }
-                    
-                    out = new ObjectOutputStream(socket.getOutputStream());
-                    msgs = new MsgSendFile(false);
-                    out.writeObject(msgs);
-                    out.flush();
-                    in.close();
-                } catch(FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch(IOException e) {
-                    e.printStackTrace();
+
+                    System.out.println("Transferencia concluida");
+                } catch (FileNotFoundException e) {
+                    System.out.println("Erro " + e);
+                } catch (IOException e) {
+                    System.out.println("Erro " + e);
+                }
+            }
+            else {
+                ObjectOutputStream ob;
+                try {
+                    ob = new ObjectOutputStream(socket.getOutputStream());
+                    Long size = 0L;
+                    ob.writeObject(size);
+                    ob.flush();
+                } catch (IOException ex) {
+                    System.out.println("Erro " + ex);
                 }
             }
         }
@@ -608,7 +641,7 @@ public class FileServer {
                         outputStream.writeObject("<File_Created>");
                         outputStream.flush();
                     } catch (IOException ex) {
-                        ex.printStackTrace();
+                        System.out.println("Erro " + ex);
                     }
                 }
             }
@@ -625,7 +658,7 @@ public class FileServer {
                     outputStream.writeObject("<Dir_Created>");
                     outputStream.flush();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("Erro " + e);
                 }
             }
         }
@@ -634,11 +667,10 @@ public class FileServer {
             File f = null;
             DirectoryInfo dinfo = new DirectoryInfo(new ArrayList<>(), new ArrayList<>());
 
-            if (!splitted[1].equals(File.separator)) {
+            if (!splitted[1].equals(File.separator))
                 f = new File(defaultFolder + File.separator + myUsername + File.separator + splitted[1] + File.separator);
-            } else {
+            else
                 f = new File(defaultFolder + File.separator + myUsername + File.separator);
-            }
 
             String[] names = f.list();
 
@@ -661,9 +693,60 @@ public class FileServer {
                 out.writeObject(dinfo);
                 out.flush();
             } catch (IOException ex) {
+                System.out.println("Erro " + ex);
             }
         }
 
+        private void executarComandoMover(String[] splitted) {
+            // mv:origem:destino
+            String pattern = Pattern.quote(System.getProperty("file.separator"));
+            String[] arr = splitted[1].split(pattern);
+            
+            File source = new File(defaultFolder+File.separator+myUsername+File.separator+splitted[1]);
+            File dest = new File(defaultFolder+File.separator + myUsername + File.separator +splitted[2]+File.separator+arr[arr.length-1]);
+            
+            if (!source.isDirectory() && source.exists())
+            {
+                Path src = Paths.get(source.getPath());
+                Path dst = Paths.get(dest.getPath());
+            
+                try {
+                    Files.move(src, dst, REPLACE_EXISTING);
+                } catch (IOException ex) {
+                    System.out.println("Erro " + ex);
+                }
+            }
+        }
+
+        private void executarComandoCopiar(String[] splitted) {
+            // cp:origem:destino
+            String pattern = Pattern.quote(System.getProperty("file.separator"));
+            String[] arr = splitted[1].split(pattern);
+            
+            File source = new File(defaultFolder + File.separator + myUsername + File.separator + splitted[1]);
+            File dest = new File(defaultFolder + File.separator + myUsername + File.separator + splitted[2]+File.separator+arr[arr.length-1]);
+            
+            if (!source.isDirectory() && source.exists())
+            {
+                Path src = Paths.get(source.getPath());
+                Path dst = Paths.get(dest.getPath());
+            
+                try {
+                    Files.copy(src, dst, REPLACE_EXISTING);
+                } catch (IOException ex) {
+                    System.out.println("Erro " + ex);
+                }
+            }
+        }
+
+        private void executarComandoRemove(String[] splitted) {
+            // rm:path
+            File f = new File(defaultFolder + File.separator + myUsername + File.separator + splitted[1]);
+            
+            if (!f.isDirectory() && f.exists())
+                f.delete();
+        }
+        
         private void executarComandoExit() {
             setRunning(false);
         }
