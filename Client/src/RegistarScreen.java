@@ -20,6 +20,7 @@ public class RegistarScreen extends javax.swing.JDialog {
 
     Utils u;
     Server srv;
+    static boolean flag;
     
     /**
      * Creates new form RegistarScreen
@@ -62,6 +63,11 @@ public class RegistarScreen extends javax.swing.JDialog {
      */
     public int getReturnStatus() {
         return returnStatus;
+    }
+    
+    public Utils showDialog() {
+        setVisible(true);
+        return u;
     }
 
     /**
@@ -205,9 +211,12 @@ public class RegistarScreen extends javax.swing.JDialog {
                 JOptionPane.showMessageDialog(this, "Registo efetuado.");
                 doClose(RET_OK);
             }
+            else
+                u = null;
         }
-        else
+        else {
             JOptionPane.showMessageDialog(this, "Dados inválidos.");
+        }
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed

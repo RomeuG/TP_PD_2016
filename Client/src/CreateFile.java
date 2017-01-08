@@ -1,6 +1,7 @@
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -13,6 +14,7 @@ public class CreateFile extends javax.swing.JDialog {
     String fileName;
     boolean flag;
     Utils u;
+    String path;
             
     /**
      * A return status code - returned if Cancel button has been pressed
@@ -150,9 +152,9 @@ public class CreateFile extends javax.swing.JDialog {
         
         if (fileName.length() > 0) {
             if (flag)
-                u.createFile(fileName);
+                u.createFile(path+File.separator+fileName);
             else
-                u.makeDir(fileName);
+                u.makeDir(path+File.separator+fileName);
         }
         
         doClose(RET_OK);
@@ -229,7 +231,8 @@ public class CreateFile extends javax.swing.JDialog {
 
     private int returnStatus = RET_CANCEL;
 
-    void showDialog() {
+    void showDialog(String path) {
+        this.path = path;
         setVisible(true);
     }
 }

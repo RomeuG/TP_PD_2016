@@ -57,10 +57,7 @@ public class Chat extends javax.swing.JFrame {
 
         MSGClients msg = new MSGClients(serverName, username);
 
-        //DatagramSocket socket = null;
         try {
-            //socket = new DatagramSocket();
-
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             ObjectOutputStream out = new ObjectOutputStream(bout);
             out.writeObject(msg);
@@ -84,11 +81,6 @@ public class Chat extends javax.swing.JFrame {
         @Override
         public void run() {
 
-//            try {
-//                //socket = new DatagramSocket();
-//            } catch (SocketException ex) {
-//                ex.printStackTrace();
-//            }
             while (true) {
                 try {
                     p = new DatagramPacket(new byte[4096], 4096);
@@ -256,12 +248,15 @@ public class Chat extends javax.swing.JFrame {
 
     private void jListClientesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListClientesValueChanged
         int index = jListClientes.getSelectedIndex();
-        destinatario = listModelClientes.get(index);
-        jTextAreaMsg.setText("");
-        listModel = new DefaultListModel<>();
-        jListChat.setModel(listModel);
-        setAllMessages(destinatario);
-        labelClienteName.setText(destinatario);
+        
+        if (index != -1) {
+            destinatario = listModelClientes.get(index);
+            jTextAreaMsg.setText("");
+            listModel = new DefaultListModel<>();
+            jListChat.setModel(listModel);
+            setAllMessages(destinatario);
+            labelClienteName.setText(destinatario);
+        }
     }//GEN-LAST:event_jListClientesValueChanged
 
     public void setAllMessages(String destinario) {
@@ -290,7 +285,6 @@ public class Chat extends javax.swing.JFrame {
             oos.writeObject(msgToSend);
             final byte[] data = baos.toByteArray();
 
-            //socket = new DatagramSocket();
             DatagramPacket dpack = new DatagramPacket(data, data.length, InetAddress.getByName(udpIp), udpPort);
             socket.send(dpack);
 

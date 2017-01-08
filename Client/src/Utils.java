@@ -1,10 +1,16 @@
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class Utils implements InterfaceCli
 {
@@ -154,8 +160,48 @@ public class Utils implements InterfaceCli
     }
 
     @Override
-    public void getFileContent() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean getFileContent(String path) {
+        ObjectInputStream in;
+        OutputStream out;
+        ObjectOutputStream outs = null;
+        
+        try {
+            outs = new ObjectOutputStream(sock.getOutputStream());
+            outs.writeObject("download:"+path);
+            outs.flush();
+            
+            String pattern = Pattern.quote(System.getProperty("file.separator"));
+            String[] arr = path.split(pattern);
+            
+            out = new FileOutputStream(arr[arr.length-1]);
+            in = new ObjectInputStream(sock.getInputStream());
+
+            while (true) {
+                Object o = in.readObject();
+                
+                if(o instanceof MsgSendFile)
+                {
+                    MsgSendFile msg = (MsgSendFile) o;
+                    
+                    if (msg.isMoreFile()) {
+                        out.write(msg.getArr());
+                    }
+                    else
+                        break;
+                }
+            }
+            
+            out.close();
+            
+            return true;
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        
+        return false;
     }
 
     @Override
@@ -195,7 +241,7 @@ public class Utils implements InterfaceCli
         
         try {
             out = new ObjectOutputStream(sock.getOutputStream());
-            out.writeObject("create_file:"+fileName);
+            out.writeObject("upload:create_file:"+fileName);
             out.flush();
             
             in = new ObjectInputStream(sock.getInputStream());
@@ -242,10 +288,5 @@ public class Utils implements InterfaceCli
         }
         
         return null;
-    }
-
-    @Override
-    public void getWorkingDirContent() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

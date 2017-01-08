@@ -1,5 +1,6 @@
 
 import java.io.File;
+import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
 
 
@@ -75,6 +76,11 @@ public class ClientApp extends javax.swing.JFrame
 
         jButton2.setText("<-");
         jButton2.setEnabled(false);
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         fileMenu.setMnemonic('f');
         fileMenu.setText("Ficheiro");
@@ -238,19 +244,28 @@ public class ClientApp extends javax.swing.JFrame
     // Registar
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
         RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled, srv);
-        r.setVisible(true);
+        this.u = r.showDialog();
+        
+        if (u != null) {
+            loginMenuItem.setEnabled(false);
+            logoutMenuItem.setEnabled(true);
+            jList.setEnabled(true);
+            jButton1.setEnabled(true);
+            jButton2.setEnabled(true);
+            jChat.setEnabled(true);
+        }
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     // Criar ficheiro
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
         CreateFile cf = new CreateFile(this, rootPaneCheckingEnabled, u, true);
-        cf.showDialog();
+        cf.showDialog(path);
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     // Criar directoria
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
         CreateFile cf = new CreateFile(this, rootPaneCheckingEnabled, u, false);
-        cf.showDialog();
+        cf.showDialog(path);
     }//GEN-LAST:event_jMenuItem3ActionPerformed
 
     // Dir seguinte
@@ -268,10 +283,13 @@ public class ClientApp extends javax.swing.JFrame
         
             String[] arr = obj.split(":");
             if (arr[0].equals("dir")) {
-                path = path+File.separator+obj;
+                path = path+File.separator+arr[arr.length-1];
             }
-            //else if (arr[0].equals("file"))
-                // falta fazer isto ....
+            else if (arr[0].equals("file")) {
+                // DOWNLOAD
+                if (u.getFileContent(path+File.separator+arr[arr.length-1]))
+                    System.out.println("FICHEIRO TRANSFERIDO");
+            }
         }
         
         dinfo = u.changeWorkingDirectory(path);
@@ -293,7 +311,39 @@ public class ClientApp extends javax.swing.JFrame
     private void jChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jChatActionPerformed
         Chat c = new Chat(u.getUsername(), srv.getServerName(), "127.0.0.1", 1338);
         c.setVisible(true);
+        jChat.setEnabled(false);
     }//GEN-LAST:event_jChatActionPerformed
+
+    // Dir anterior
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        DirectoryInfo dinfo = null;
+        listModel = new DefaultListModel<>();
+        
+        if (path == null)
+            path = File.separator;
+        
+        String pattern = Pattern.quote(System.getProperty("file.separator"));
+        String[] arr = path.split(pattern);
+        
+        path = File.separator;
+        for (int i = 0; i < arr.length-1; i++) {
+            path = arr[i]+File.separator;
+        }
+        
+        dinfo = u.changeWorkingDirectory(path);
+
+        if (dinfo != null) {
+            for (String str : dinfo.getDir()) {
+                listModel.addElement("dir:"+str);
+            }
+            
+            for (String str2 : dinfo.getFicheirosName()) {
+                listModel.addElement("file:"+str2);
+            }
+        }
+        
+        jList.setModel(listModel);
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
