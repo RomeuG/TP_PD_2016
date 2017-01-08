@@ -62,11 +62,6 @@ public class ClientApp extends javax.swing.JFrame
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         jList.setEnabled(false);
         jScrollPane1.setViewportView(jList);
 
@@ -431,7 +426,6 @@ public class ClientApp extends javax.swing.JFrame
                 if(u.removeFile(path+File.separator+arr[arr.length-1]))
                     System.out.println("Apagou ficheiro!");
         }
-        
     }//GEN-LAST:event_deleteMenuItemActionPerformed
 
     // COPIAR DE
@@ -453,7 +447,6 @@ public class ClientApp extends javax.swing.JFrame
         }
         
         jCopiarPara.setEnabled(true);
-        
     }//GEN-LAST:event_jMenuItem5ActionPerformed
 
     // COPIAR PARA

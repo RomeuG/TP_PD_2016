@@ -23,9 +23,9 @@ public class Utils implements InterfaceCli
         try {
             sock = new Socket(InetAddress.getByName(this.ip.substring(1, this.ip.length())), this.port);
         } catch (UnknownHostException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
     }
 
@@ -72,9 +72,9 @@ public class Utils implements InterfaceCli
                     return false;
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return false;
@@ -104,9 +104,9 @@ public class Utils implements InterfaceCli
                     return false;
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return false;
@@ -133,9 +133,9 @@ public class Utils implements InterfaceCli
                 return str.equals("<Logout_OK>");
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return false;
@@ -151,7 +151,7 @@ public class Utils implements InterfaceCli
             out.flush();
             
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
     }
 
@@ -165,7 +165,7 @@ public class Utils implements InterfaceCli
             out.flush();
             
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
     }
 
@@ -180,7 +180,7 @@ public class Utils implements InterfaceCli
             
             return true;
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return false;
@@ -224,9 +224,9 @@ public class Utils implements InterfaceCli
             System.out.println("Transferencia concluida");
             return true;
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
 
         return false;
@@ -253,9 +253,9 @@ public class Utils implements InterfaceCli
                 return str.equals("<Dir_Created>");
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return false;
@@ -282,9 +282,9 @@ public class Utils implements InterfaceCli
                 return str.equals("<File_Created>");
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return false;
@@ -310,9 +310,9 @@ public class Utils implements InterfaceCli
                 return dir;
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            System.out.println("Erro " + ex);
         }
         
         return null;
