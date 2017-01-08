@@ -7,9 +7,15 @@ import java.util.ArrayList;
  */
 public interface GetRemoteListServiceInterface extends Remote {
 
-    public ArrayList<Server> getLista() throws RemoteException;
+    ArrayList<Server> getLista() throws RemoteException;
 
-    public void addObserver(GetRemoteFileObserverInterface observer) throws RemoteException;
-    public void removeObserver(GetRemoteFileObserverInterface observer) throws RemoteException;
+    void addServer(Server srv) throws RemoteException;
+    void removeServer(Server srv) throws RemoteException;
+
+    void addClient(Cliente client, String serverName) throws RemoteException;
+    void removeClient(Cliente client, String serverName) throws RemoteException;
+//
+//    public void addObserver(GetRemoteFileObserverInterface observer) throws RemoteException;
+//    public void removeObserver(GetRemoteFileObserverInterface observer) throws RemoteException;
 
 }

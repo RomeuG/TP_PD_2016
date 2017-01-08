@@ -139,33 +139,6 @@ public class ThreadAtendeCliente extends Thread {
                                 break;
                             }
                         }
-//
-//                        for(int i = 0; i < trataHb.getServerList().size(); i++)
-//                        {
-//                            if(trataHb.getServerList().get(i).getServerName().equals(_msg.getServerName())) {
-//                                for (int f = 0; f < trataHb.getServerList().get(i).getClientesOn().size(); f++) {
-//                                    if (trataHb.getServerList().get(i).getClientesOn().get(f).getUsername().equals(_msg.getDestinatario())) {
-//                                        _a = trataHb.getServerList().get(i).getClientesOn().get(f).getIp();
-//                                        _p = trataHb.getServerList().get(i).getClientesOn().get(f).getPorto();
-//
-//                                        bout = new ByteArrayOutputStream();
-//                                        out = new ObjectOutputStream(bout);
-//
-//                                        out.writeObject(_msg);
-//                                        out.flush();
-//
-//                                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(_a), _p);
-//                                        this.trataHb.getSdSocket().send(p);
-//
-//                                        System.out.println("[INFO] - Enviei MSGToCliente.");
-//
-//                                        break;
-//                                    }
-//                                }
-//
-//                                break;
-//                            }
-//                        }
                     } else if(msg instanceof MsgDirectoryServer) {
 
                         System.out.println("[INFO] - Recebi heartbeat do servidor.");
