@@ -1,4 +1,3 @@
-import Communication.Cliente;
 import java.io.Serializable;
 import java.util.ArrayList;
 

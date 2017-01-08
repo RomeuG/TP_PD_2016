@@ -1,15 +1,17 @@
 
-import Communication.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -200,9 +202,10 @@ public class FileServer {
                     clientThreads.add(atendeCliente);
                     atendeCliente.start();
                     System.out.println("Lancada thread para atender o cliente " + s.getInetAddress().getHostAddress() + ":" + s.getPort());
+                } catch (SocketTimeoutException e) {
+                    System.out.println("Erro " + e);
                 } catch (IOException e) {
                     System.out.println("Erro " + e);
-                    return;
                 }
             }
 
@@ -221,7 +224,6 @@ public class FileServer {
                 serverSocket.close();
             } catch (IOException e) {
                 System.out.println("Erro " + e);
-                return;
             }
         }
     }
@@ -229,7 +231,7 @@ public class FileServer {
     /**
      * Thread -> Manage single client
      */
-    class AtendeCliente extends Thread implements Observer {
+    class AtendeCliente extends Thread {
 
         private Socket socket;
         private String myUsername;
@@ -247,7 +249,7 @@ public class FileServer {
 
         @Override
         public void run() {
-            synchronized (running) {
+            //synchronized (running) {
                 while (running) {
                     ObjectInputStream in;
                     try {
@@ -318,7 +320,9 @@ public class FileServer {
                         ex.printStackTrace();
                     }
                 }
-            }
+            //}
+                
+                System.out.println("VOU SAIR ");
         }
 
         private void executarComandoLogin(String[] splittedList, Socket s) {
@@ -331,6 +335,33 @@ public class FileServer {
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                     outputStream.writeObject("<Login_Success>");
                     outputStream.flush();
+                    
+                    msg.getClientesOn().add(cli);
+
+                    try {
+                        DatagramSocket _s = new DatagramSocket();
+
+                        ByteArrayOutputStream bout = null;
+                        ObjectOutputStream out = null;
+                        DatagramPacket sendP;
+
+                        _s.setSoTimeout(30000);
+
+                        bout = new ByteArrayOutputStream();
+                        out = new ObjectOutputStream(bout);
+                        out.writeObject(msg);
+                        out.flush();
+
+                        sendP = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName("127.0.0.1"), PORT_UDP);
+
+                        _s.send(sendP);
+                    } catch (UnknownHostException | NumberFormatException | SocketTimeoutException e) {
+                        System.out.println("Erro " + e);
+                        return;
+                    } catch (IOException e) {
+                        System.out.println("Erro " + e);
+                        return;
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -339,7 +370,6 @@ public class FileServer {
                 clientes.add(new TCP(socket, cli));
                 cli.setIp(s.getInetAddress().getHostAddress());
                 cli.setPorto(s.getPort());
-                msg.getClientesOn().add(cli);
             } else {
                 try {
                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -354,13 +384,11 @@ public class FileServer {
         }
 
         private void removeCliente(String username) {
-            int conta = 0;
             for (TCP c : clientes) {
                 if (c.getCli().getUsername().equals(username)) {
-                    clientes.remove(conta);
+                    clientes.remove(c);
+                    return;
                 }
-
-                conta++;
             }
         }
 
@@ -376,6 +404,7 @@ public class FileServer {
         private void executarComandoLogout() {
             removeClienteHeartBeat(myUsername);
 
+            System.out.println("Vou executar logout "+myUsername);
             try {
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 ObjectOutputStream out = new ObjectOutputStream(bout);
@@ -425,9 +454,42 @@ public class FileServer {
                     }
 
                     // Regista-se com sucesso
+                    myUsername = splittedList[1];
                     out = new ObjectOutputStream(socket.getOutputStream());
                     out.writeObject("<Regist_Success>");
                     out.flush();
+                    
+                    // Adiciona um novo objecto do tipo TCP à lista
+                    clientes.add(new TCP(socket, cli));
+                    cli.setIp(socket.getInetAddress().getHostAddress());
+                    cli.setPorto(socket.getPort());
+                    
+                    msg.getClientesOn().add(cli);
+
+                    try {
+                        DatagramSocket _s = new DatagramSocket();
+
+                        ByteArrayOutputStream bout = null;
+                        ObjectOutputStream outs = null;
+                        DatagramPacket sendP;
+
+                        _s.setSoTimeout(30000);
+
+                        bout = new ByteArrayOutputStream();
+                        outs = new ObjectOutputStream(bout);
+                        outs.writeObject(msg);
+                        outs.flush();
+
+                        sendP = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName("127.0.0.1"), PORT_UDP);
+
+                        _s.send(sendP);
+                    } catch (UnknownHostException | NumberFormatException | SocketTimeoutException e) {
+                        System.out.println("Erro " + e);
+                        return;
+                    } catch (IOException e) {
+                        System.out.println("Erro " + e);
+                        return;
+                    }
 
                     // Create user directory
                     CreateDirectory(defaultFolder, cli.getUsername());
@@ -498,12 +560,44 @@ public class FileServer {
         }
 
         private void executarComandoDownload(String[] splittedList) {
+            // download:pathFile
+            File file = new File(defaultFolder + File.separator + myUsername + File.separator + splittedList[1]);
+            
+            if (file.isFile())
+            {
+                MsgSendFile msgs = new MsgSendFile(true);
+                
+                try {
+                    // Get the size of the file
+                    long length = file.length();
+                    byte[] bytes = new byte[4096];
+                    InputStream in = new FileInputStream(file);
+                    ObjectOutputStream out;
 
+                    int count;
+                    while ((count = in.read(bytes)) > 0) {
+                        msgs.setArr(bytes);
+                        out = new ObjectOutputStream(socket.getOutputStream());
+                        out.writeObject(msgs);
+                        out.flush();
+                    }
+                    
+                    out = new ObjectOutputStream(socket.getOutputStream());
+                    msgs = new MsgSendFile(false);
+                    out.writeObject(msgs);
+                    out.flush();
+                    in.close();
+                } catch(FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         private void executarComandoUpload(String[] splittedList) {
             // CRIAR FICHEIRO  upload:create_file:fileName
-            File f;
+            File f = null;
             if (splittedList[1].equals("create_file")) {
                 f = new File(defaultFolder + File.separator + myUsername + File.separator + splittedList[2]);
                 if (!f.exists()) {
@@ -548,14 +642,16 @@ public class FileServer {
 
             String[] names = f.list();
 
-            for (String name : names) {
-                try {
-                    if (new File(f.getCanonicalPath() + name).isDirectory()) {
+            File f2 = null;
+            
+            if(names != null) {
+                for (String name : names) {
+                    f2 = new File(f.getPath()+File.separator+name);
+                
+                    if (f2.isDirectory())
                         dinfo.getDir().add(name);
-                    } else {
+                    else
                         dinfo.getFicheirosName().add(name);
-                    }
-                } catch (IOException ex) {
                 }
             }
 
@@ -570,11 +666,6 @@ public class FileServer {
 
         private void executarComandoExit() {
             setRunning(false);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            System.out.println(arg);
         }
     }
 }
