@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 public class InfoParaCliente implements Serializable 
 {
+    private static final long serialVersionUID = 10130L;
+
     private ArrayList<Server> listaServers;
 
     InfoParaCliente(ArrayList<Server> listaServers) {

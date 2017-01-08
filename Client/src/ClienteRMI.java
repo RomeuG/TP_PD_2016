@@ -31,10 +31,10 @@ public class ClienteRMI extends UnicastRemoteObject
         
             
             // Obtem a lista pretendida, invocando o metodo getLista no servico remoto.
-            if (remoteListService.getLista(myRemoteService))
-                System.out.println("Lista recebida com sucesso.");
-            else
-                System.out.println("Lista NAO recebida.");
+//            if (remoteListService.getLista(myRemoteService))
+//                System.out.println("Lista recebida com sucesso.");
+//            else
+//                System.out.println("Lista NAO recebida.");
             
         } catch(RemoteException e) {
             System.out.println("Erro remoto - " + e);

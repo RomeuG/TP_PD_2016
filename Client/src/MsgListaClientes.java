@@ -7,6 +7,9 @@ import java.util.List;
  * Created by Andre on 07/01/2017.
  */
 public class MsgListaClientes implements Serializable {
+
+    private static final long serialVersionUID = 10131L;
+
     private List <Cliente> listaClientes;
 
     public List<Cliente> getListaClientes() {

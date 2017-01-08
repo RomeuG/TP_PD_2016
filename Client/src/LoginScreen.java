@@ -18,7 +18,7 @@ public class LoginScreen extends javax.swing.JDialog {
         initComponents();
         
         ip = srv.getAddress();
-        porto = srv.getPort();
+        porto = srv.getPortTCP();
     }
     
     public Utils showDialog() {

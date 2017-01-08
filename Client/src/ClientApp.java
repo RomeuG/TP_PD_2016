@@ -237,7 +237,7 @@ public class ClientApp extends javax.swing.JFrame
 
     // Registar
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled);
+        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled, srv);
         r.setVisible(true);
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 

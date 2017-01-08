@@ -18,14 +18,19 @@ import javax.swing.DefaultListModel;
 public class Chat extends javax.swing.JFrame {
 
     HashMap<String, ArrayList<MSGToCliente>> historico;
+
     String username;
     String destinatario;
     String serverName;
     String udpIp;
+
     int udpPort;
     byte[] buf;
+
     DefaultListModel<String> listModel;
     DefaultListModel<String> listModelClientes;
+
+    DatagramSocket socket;
 
     public Chat(String username, String serverName, String ipUdp, int udpPort) {
         this.username = username;
@@ -40,14 +45,21 @@ public class Chat extends javax.swing.JFrame {
         jListClientes.setModel(listModelClientes);
         jListChat.setModel(listModel);
         historico = new HashMap<>();
+
+        try {
+            socket = new DatagramSocket();
+        } catch (SocketException ex) {
+            ex.printStackTrace();
+        }
+
         RcvMsg m = new RcvMsg();
         m.start();
 
-        MSGClients msg = new MSGClients(serverName);
+        MSGClients msg = new MSGClients(serverName, username);
 
-        DatagramSocket socket = null;
+        //DatagramSocket socket = null;
         try {
-            socket = new DatagramSocket();
+            //socket = new DatagramSocket();
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             ObjectOutputStream out = new ObjectOutputStream(bout);
@@ -67,17 +79,16 @@ public class Chat extends javax.swing.JFrame {
 
     class RcvMsg extends Thread {
 
-        DatagramSocket socket;
         DatagramPacket p;
 
         @Override
         public void run() {
 
-            try {
-                socket = new DatagramSocket();
-            } catch (SocketException ex) {
-                ex.printStackTrace();
-            }
+//            try {
+//                //socket = new DatagramSocket();
+//            } catch (SocketException ex) {
+//                ex.printStackTrace();
+//            }
             while (true) {
                 try {
                     p = new DatagramPacket(new byte[4096], 4096);
@@ -90,11 +101,19 @@ public class Chat extends javax.swing.JFrame {
 
                         listModelClientes = new DefaultListModel<>();
                         for (Cliente c : lista.getListaClientes()) {
-                            listModelClientes.addElement(c.getUsername());
+                            if(!c.getUsername().equals(username)){
+                                listModelClientes.addElement(c.getUsername());
+                                System.out.println("CLIENTE: " + c.getUsername());
+                            }
                         }
+
+                        jListClientes.setModel(listModelClientes);
 
                     } else if (o instanceof MSGToCliente) {
                         MSGToCliente msg = (MSGToCliente) o;
+
+                        System.out.println("Recebi MSGToClient: " + msg.getRementente());
+
                         Object ob = historico.get(msg.getRementente());
                         if (ob != null) {
                             ArrayList ar = historico.get(msg.getRementente());
@@ -104,7 +123,7 @@ public class Chat extends javax.swing.JFrame {
                             historico.put(msg.getRementente(), new ArrayList<>());
                             historico.get(msg.getRementente()).add(msg);
                         }
-                        if (username.equals(msg.getRementente())) {
+                        if (destinatario.equals(msg.getRementente())) {
                             listModel.addElement(msg.getRementente() + ": " + msg.getMensagem());
                             int lastIndex = jListChat.getModel().getSize() - 1;
                             if (lastIndex >= 0) {
@@ -271,14 +290,14 @@ public class Chat extends javax.swing.JFrame {
             oos.writeObject(msgToSend);
             final byte[] data = baos.toByteArray();
 
-            DatagramSocket socket = new DatagramSocket();
+            //socket = new DatagramSocket();
             DatagramPacket dpack = new DatagramPacket(data, data.length, InetAddress.getByName(udpIp), udpPort);
             socket.send(dpack);
 
             Object ob = historico.get(msgToSend.getDestinatario());
             if (ob != null) {
                 ArrayList ar = historico.get(msgToSend.getDestinatario());
-                ar.add(msg);
+                ar.add(msgToSend);
                 historico.put(msgToSend.getDestinatario(), ar);
             } else {
                 historico.put(msgToSend.getDestinatario(), new ArrayList<>());
