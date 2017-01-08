@@ -9,6 +9,7 @@ public class ClientApp extends javax.swing.JFrame
     Utils u;
     Server srv;
     String path;
+    String pathMover;
     DefaultListModel<String> listModel;
     
     public ClientApp() {
@@ -51,7 +52,10 @@ public class ClientApp extends javax.swing.JFrame
         editMenu = new javax.swing.JMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
-        copyMenuItem = new javax.swing.JMenuItem();
+        jMenuItem4 = new javax.swing.JMenuItem();
+        jMoverPara = new javax.swing.JMenuItem();
+        jMenuItem5 = new javax.swing.JMenuItem();
+        jCopiarPara = new javax.swing.JMenuItem();
         deleteMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         aboutMenuItem = new javax.swing.JMenuItem();
@@ -143,7 +147,7 @@ public class ClientApp extends javax.swing.JFrame
         });
         editMenu.add(jMenuItem2);
 
-        jMenuItem3.setText("Criar nova directoria");
+        jMenuItem3.setText("Criar directoria");
         jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem3ActionPerformed(evt);
@@ -151,12 +155,47 @@ public class ClientApp extends javax.swing.JFrame
         });
         editMenu.add(jMenuItem3);
 
-        copyMenuItem.setMnemonic('y');
-        copyMenuItem.setText("Ver ficheiro");
-        editMenu.add(copyMenuItem);
+        jMenuItem4.setText("Mover de");
+        jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem4ActionPerformed(evt);
+            }
+        });
+        editMenu.add(jMenuItem4);
+
+        jMoverPara.setText("Mover para");
+        jMoverPara.setEnabled(false);
+        jMoverPara.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMoverParaActionPerformed(evt);
+            }
+        });
+        editMenu.add(jMoverPara);
+
+        jMenuItem5.setText("Copiar de");
+        jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem5ActionPerformed(evt);
+            }
+        });
+        editMenu.add(jMenuItem5);
+
+        jCopiarPara.setText("Copiar para");
+        jCopiarPara.setEnabled(false);
+        jCopiarPara.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCopiarParaActionPerformed(evt);
+            }
+        });
+        editMenu.add(jCopiarPara);
 
         deleteMenuItem.setMnemonic('d');
         deleteMenuItem.setText("Apagar");
+        deleteMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteMenuItemActionPerformed(evt);
+            }
+        });
         editMenu.add(deleteMenuItem);
 
         menuBar.add(editMenu);
@@ -345,6 +384,86 @@ public class ClientApp extends javax.swing.JFrame
         jList.setModel(listModel);
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    // MOVER DE
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+        
+        String obj = null;
+        listModel = new DefaultListModel<>();
+        
+        if (path == null)
+            path = File.separator;
+        
+        if (jList.getSelectedIndex() != -1) {
+            obj = (String) jList.getSelectedValue();
+        
+            String[] arr = obj.split(":");
+            if (arr[0].equals("file")) {
+                pathMover = path+File.separator+arr[arr.length-1];
+            }
+        }
+        
+        jMoverPara.setEnabled(true);
+        
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
+
+    // MOVER PARA
+    private void jMoverParaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMoverParaActionPerformed
+        
+        u.moveFile(pathMover, path);
+        jMoverPara.setEnabled(false);
+        
+    }//GEN-LAST:event_jMoverParaActionPerformed
+
+    // APAGAR FICHEIRO
+    private void deleteMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteMenuItemActionPerformed
+        
+        String obj = null;
+        listModel = new DefaultListModel<>();
+        
+        if (path == null)
+            path = File.separator;
+        
+        if (jList.getSelectedIndex() != -1) {
+            obj = (String) jList.getSelectedValue();
+        
+            String[] arr = obj.split(":");
+            if (arr[0].equals("file"))
+                if(u.removeFile(path+File.separator+arr[arr.length-1]))
+                    System.out.println("Apagou ficheiro!");
+        }
+        
+    }//GEN-LAST:event_deleteMenuItemActionPerformed
+
+    // COPIAR DE
+    private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
+        
+        String obj = null;
+        listModel = new DefaultListModel<>();
+        
+        if (path == null)
+            path = File.separator;
+        
+        if (jList.getSelectedIndex() != -1) {
+            obj = (String) jList.getSelectedValue();
+        
+            String[] arr = obj.split(":");
+            if (arr[0].equals("file")) {
+                pathMover = path+File.separator+arr[arr.length-1];
+            }
+        }
+        
+        jCopiarPara.setEnabled(true);
+        
+    }//GEN-LAST:event_jMenuItem5ActionPerformed
+
+    // COPIAR PARA
+    private void jCopiarParaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCopiarParaActionPerformed
+        
+        u.copyFile(pathMover, path);
+        jCopiarPara.setEnabled(false);
+        
+    }//GEN-LAST:event_jCopiarParaActionPerformed
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -380,7 +499,6 @@ public class ClientApp extends javax.swing.JFrame
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenuItem;
-    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem deleteMenuItem;
     private javax.swing.JMenu editMenu;
     private javax.swing.JMenuItem exitMenuItem;
@@ -389,10 +507,14 @@ public class ClientApp extends javax.swing.JFrame
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JMenuItem jChat;
+    private javax.swing.JMenuItem jCopiarPara;
     private javax.swing.JList jList;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem jMenuItem4;
+    private javax.swing.JMenuItem jMenuItem5;
+    private javax.swing.JMenuItem jMoverPara;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenuItem loginMenuItem;
     private javax.swing.JMenuItem logoutMenuItem;

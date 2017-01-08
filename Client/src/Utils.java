@@ -4,12 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 public class Utils implements InterfaceCli
@@ -145,62 +142,93 @@ public class Utils implements InterfaceCli
     }
 
     @Override
-    public boolean copyFile() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void copyFile(String src, String dst) {
+        ObjectOutputStream out;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("cp:"+src+":"+dst);
+            out.flush();
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Override
-    public boolean moveFile() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void moveFile(String src, String dst) {
+        ObjectOutputStream out;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("mv:"+src+":"+dst);
+            out.flush();
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Override
-    public boolean removeFile() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean removeFile(String path) {
+        ObjectOutputStream out;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("rm:"+path);
+            out.flush();
+            
+            return true;
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        
+        return false;
     }
 
     @Override
     public boolean getFileContent(String path) {
-        ObjectInputStream in;
-        OutputStream out;
         ObjectOutputStream outs = null;
-        
+        ObjectInputStream ob;
+
         try {
             outs = new ObjectOutputStream(sock.getOutputStream());
             outs.writeObject("download:"+path);
             outs.flush();
-            
+
+            ob = new ObjectInputStream(sock.getInputStream());
+            Long size = (Long) ob.readObject();
+            int nbytes;
+            InputStream in = sock.getInputStream();
+            byte[] fileChunck = new byte[1024];
+
             String pattern = Pattern.quote(System.getProperty("file.separator"));
             String[] arr = path.split(pattern);
-            
-            out = new FileOutputStream(arr[arr.length-1]);
-            in = new ObjectInputStream(sock.getInputStream());
 
-            while (true) {
-                Object o = in.readObject();
-                
-                if(o instanceof MsgSendFile)
-                {
-                    MsgSendFile msg = (MsgSendFile) o;
-                    
-                    if (msg.isMoreFile()) {
-                        out.write(msg.getArr());
-                    }
-                    else
-                        break;
-                }
+            FileOutputStream localFileOutputStream = new FileOutputStream(arr[arr.length - 1]);
+
+            Long count = 0L;
+            
+            if(size == 0)
+                return false;
+            
+            while ((nbytes = in.read(fileChunck)) > 0) {
+                //System.out.println("Recebido o bloco n. " + ++contador + " com " + nbytes + " bytes.");
+                localFileOutputStream.write(fileChunck, 0, nbytes);
+                //System.out.println("Acrescentados " + nbytes + " bytes ao ficheiro " + localFilePath+ ".");
+                count += nbytes;
+                if(count >= size)
+                    break;
             }
-            
-            out.close();
-            
+
+            System.out.println("Transferencia concluida");
             return true;
-            
         } catch (IOException ex) {
             ex.printStackTrace();
         } catch (ClassNotFoundException ex) {
             ex.printStackTrace();
         }
-        
+
         return false;
     }
 

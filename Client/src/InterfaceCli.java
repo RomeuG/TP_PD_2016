@@ -4,13 +4,11 @@ public interface InterfaceCli
     public boolean register(String username, String password);
     public boolean login(String username, String password);
     public boolean logout();
-    public boolean copyFile();
-    public boolean moveFile();
+    public void copyFile(String src, String dst);
+    public void moveFile(String src, String dst);
+    public boolean removeFile(String path);
     public DirectoryInfo changeWorkingDirectory(String path);
-    //public void getWorkingDirContent();
-    // public void getWorkingDirPath();
     public boolean getFileContent(String path);
-    public boolean removeFile();
     public boolean makeDir(String dir);
     public boolean createFile(String fileName);
 }
