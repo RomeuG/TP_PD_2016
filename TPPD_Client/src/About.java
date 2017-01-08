@@ -70,7 +70,7 @@ public class About extends javax.swing.JDialog {
 
         okButton.setText("OK");
         okButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
@@ -159,7 +159,7 @@ public class About extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void okButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         doClose(RET_OK);
     }//GEN-LAST:event_okButtonActionPerformed
 

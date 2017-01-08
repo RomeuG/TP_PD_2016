@@ -9,10 +9,10 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.List;
+import java.rmi.RemoteException;
 import javax.swing.DefaultListModel;
 
-public class ServerList extends javax.swing.JFrame 
+public class ServerList extends javax.swing.JFrame
 {
     InfoParaCliente info = null;
     DatagramSocket s;
@@ -26,19 +26,24 @@ public class ServerList extends javax.swing.JFrame
     int portoServDir = 1338;
     DefaultListModel<String> listModel;
     
-    /**
-     * Creates new form ServerList
-     */
+    // Creates new form ServerList
     public ServerList() {
         initComponents();
         
         listModel = new DefaultListModel<>();
         
+        /* // RMI
+        try {
+            ClienteRMI cli = new ClienteRMI();
+        } catch (RemoteException ex) { }
+        */
+        
+        
         try {
             // Enviar pacote UDP para o Serviço de Directoria
             s = new DatagramSocket();
             s.setSoTimeout(30000);
-        
+
             bout = new ByteArrayOutputStream();
             out = new ObjectOutputStream(bout);
             out.writeObject("<QUERO_LISTA>");
@@ -57,25 +62,20 @@ public class ServerList extends javax.swing.JFrame
             if (servInfo instanceof InfoParaCliente)
             {
                 info = (InfoParaCliente) servInfo;
-
-                System.out.println("Recebi InfoParaCliente:" + info.getListaServers().size());
-                System.out.println("Recebi InfoParaCliente:" + info.getListaServers().get(0).getPortTCP());
-
+            
                 if (info.getListaServers().isEmpty())
                     jBtnLigar.setEnabled(false);
                 else
                     jBtnLigar.setEnabled(true);
-                
+            
                 for (Server s : info.getListaServers()) {
                     listModel.addElement(s.getServerName());
                 }
-                
+            
                 jServList.setModel(listModel);
             }
             else
                 jBtnLigar.setEnabled(false);
-            
-            System.out.println("Cheguei AQUI !");     
         } catch(UnknownHostException e) {
             System.out.println("Erro " + e);
         } catch(SocketTimeoutException e) {
@@ -194,4 +194,5 @@ public class ServerList extends javax.swing.JFrame
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JList jServList;
     // End of variables declaration//GEN-END:variables
+
 }

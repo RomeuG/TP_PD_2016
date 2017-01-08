@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -12,13 +7,12 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
-/**
- *
- * @author João
- */
+
 public class CreateFile extends javax.swing.JDialog {
 
     String fileName;
+    boolean flag;
+    Utils u;
             
     /**
      * A return status code - returned if Cancel button has been pressed
@@ -35,6 +29,24 @@ public class CreateFile extends javax.swing.JDialog {
     public CreateFile(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        // Close the dialog when Esc is pressed
+        String cancelName = "cancel";
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
+        ActionMap actionMap = getRootPane().getActionMap();
+        actionMap.put(cancelName, new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                doClose(RET_CANCEL);
+            }
+        });
+    }
+    
+    public CreateFile(java.awt.Frame parent, boolean modal, Utils u, boolean flag) {
+        super(parent, modal);
+        initComponents();
+        this.u = u;
+        this.flag = flag;
 
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
@@ -77,14 +89,14 @@ public class CreateFile extends javax.swing.JDialog {
 
         okButton.setText("OK");
         okButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
         cancelButton.setText("Cancel");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
@@ -132,14 +144,23 @@ public class CreateFile extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void okButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+        
         fileName = txtFile.getText();
+        
+        if (fileName.length() > 0) {
+            if (flag)
+                u.createFile(fileName);
+            else
+                u.makeDir(fileName);
+        }
+        
         doClose(RET_OK);
         setVisible(false);
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
-    private void cancelButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
         fileName = null;
         doClose(RET_CANCEL);
     }//GEN-LAST:event_cancelButtonActionPerformed
@@ -208,8 +229,7 @@ public class CreateFile extends javax.swing.JDialog {
 
     private int returnStatus = RET_CANCEL;
 
-    String showDialog() {
+    void showDialog() {
         setVisible(true);
-        return fileName;
     }
 }

@@ -3,8 +3,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 
-public class Server implements Serializable {
-
+public class Server implements Serializable
+{
     private static final long serialVersionUID = 10128L;
 
     private String serverName;

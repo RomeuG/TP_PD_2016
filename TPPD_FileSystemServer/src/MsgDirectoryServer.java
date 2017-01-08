@@ -1,11 +1,10 @@
-import Communication.Cliente;
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class MsgDirectoryServer implements Serializable
 {
     private static final long serialVersionUID = 10127L;
-
+    
     private String serverName;
     private ArrayList<Cliente> clientesOn;
     private int portTCP;

@@ -1,8 +1,14 @@
 
+import java.io.File;
+import javax.swing.DefaultListModel;
+
+
 public class ClientApp extends javax.swing.JFrame
 {
     Utils u;
     Server srv;
+    String path;
+    DefaultListModel<String> listModel;
     
     public ClientApp() {
         this.setTitle("Sistema de Ficheiros");
@@ -31,7 +37,7 @@ public class ClientApp extends javax.swing.JFrame
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
+        jList = new javax.swing.JList();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
@@ -39,6 +45,7 @@ public class ClientApp extends javax.swing.JFrame
         loginMenuItem = new javax.swing.JMenuItem();
         logoutMenuItem = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
+        jChat = new javax.swing.JMenuItem();
         exitMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
@@ -50,14 +57,16 @@ public class ClientApp extends javax.swing.JFrame
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
+        jList.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane1.setViewportView(jList1);
+        jList.setEnabled(false);
+        jScrollPane1.setViewportView(jList);
 
         jButton1.setText("->");
+        jButton1.setEnabled(false);
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -65,6 +74,7 @@ public class ClientApp extends javax.swing.JFrame
         });
 
         jButton2.setText("<-");
+        jButton2.setEnabled(false);
 
         fileMenu.setMnemonic('f');
         fileMenu.setText("Ficheiro");
@@ -95,6 +105,15 @@ public class ClientApp extends javax.swing.JFrame
             }
         });
         fileMenu.add(jMenuItem1);
+
+        jChat.setText("Chat");
+        jChat.setEnabled(false);
+        jChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jChatActionPerformed(evt);
+            }
+        });
+        fileMenu.add(jChat);
 
         exitMenuItem.setMnemonic('x');
         exitMenuItem.setText("Sair");
@@ -157,14 +176,14 @@ public class ClientApp extends javax.swing.JFrame
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(539, 539, 539)
-                .addComponent(jButton2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
-                .addContainerGap(103, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 612, Short.MAX_VALUE)
+                        .addComponent(jButton2)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton1))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -192,9 +211,13 @@ public class ClientApp extends javax.swing.JFrame
         LoginScreen l = new LoginScreen(this, rootPaneCheckingEnabled, srv);
         this.u = l.showDialog();
         
-        if(u != null){
+        if (u != null) {
             loginMenuItem.setEnabled(false);
             logoutMenuItem.setEnabled(true);
+            jList.setEnabled(true);
+            jButton1.setEnabled(true);
+            jButton2.setEnabled(true);
+            jChat.setEnabled(true);
         }
     }//GEN-LAST:event_loginMenuItemActionPerformed
     
@@ -214,28 +237,63 @@ public class ClientApp extends javax.swing.JFrame
 
     // Registar
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled);
+        RegistarScreen r = new RegistarScreen(this, rootPaneCheckingEnabled, srv);
         r.setVisible(true);
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     // Criar ficheiro
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-        CreateFile cf = new CreateFile(this, rootPaneCheckingEnabled);
-        String fileName = cf.showDialog();
-        if(fileName != null)
-            u.createFile(fileName);
+        CreateFile cf = new CreateFile(this, rootPaneCheckingEnabled, u, true);
+        cf.showDialog();
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     // Criar directoria
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
-        
+        CreateFile cf = new CreateFile(this, rootPaneCheckingEnabled, u, false);
+        cf.showDialog();
     }//GEN-LAST:event_jMenuItem3ActionPerformed
 
+    // Dir seguinte
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+   
+        String obj = null;
+        DirectoryInfo dinfo = null;
+        listModel = new DefaultListModel<>();
         
+        if (path == null)
+            path = File.separator;
         
+        if (jList.getSelectedIndex() != -1) {
+            obj = (String) jList.getSelectedValue();
+        
+            String[] arr = obj.split(":");
+            if (arr[0].equals("dir")) {
+                path = path+File.separator+obj;
+            }
+            //else if (arr[0].equals("file"))
+                // falta fazer isto ....
+        }
+        
+        dinfo = u.changeWorkingDirectory(path);
+
+        if (dinfo != null) {
+            for (String str : dinfo.getDir()) {
+                listModel.addElement("dir:"+str);
+            }
+            
+            for (String str2 : dinfo.getFicheirosName()) {
+                listModel.addElement("file:"+str2);
+            }
+        }
+        
+        jList.setModel(listModel);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    // CHAT
+    private void jChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jChatActionPerformed
+        Chat c = new Chat(u.getUsername(), srv.getServerName(), "127.0.0.1", 1338);
+        c.setVisible(true);
+    }//GEN-LAST:event_jChatActionPerformed
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -280,7 +338,8 @@ public class ClientApp extends javax.swing.JFrame
     private javax.swing.JMenu helpMenu;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JList jList1;
+    private javax.swing.JMenuItem jChat;
+    private javax.swing.JList jList;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;

@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by romeu on 12/31/16.
@@ -16,10 +17,13 @@ public class ThreadAtendeCliente extends Thread {
     DatagramPacket packet;
     ObjectInputStream recv;
 
+
     ByteArrayOutputStream bout;
     ObjectOutputStream out;
 
     MsgDirectoryServer hb;
+
+    ArrayList<ClienteUDP> listaClUDP;
 
     InetAddress address;
     int port;
@@ -32,6 +36,7 @@ public class ThreadAtendeCliente extends Thread {
     ThreadAtendeCliente(TrataHeartBeat trataHb) {
         this.trataHb = trataHb;
         this.running = true;
+        this.listaClUDP = new ArrayList<>();
     }
 
     public boolean verify(ArrayList<Server> serverList, String name) {
@@ -90,6 +95,7 @@ public class ThreadAtendeCliente extends Thread {
 
                         for(int i = 0; i < trataHb.getServerList().size(); i++) {
                             if(trataHb.getServerList().get(i).getServerName().equals(_msg.getServerName())) {
+                                this.listaClUDP.add(new ClienteUDP(_msg.getUsername(), address.toString(), _msg.getServerName(), port));
                                 MsgListaClientes lista = new MsgListaClientes(trataHb.getServerList().get(i).getClientesOn());
 
                                 bout = new ByteArrayOutputStream();
@@ -98,8 +104,12 @@ public class ThreadAtendeCliente extends Thread {
                                 out.writeObject(lista);
                                 out.flush();
 
-                                DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), address, port);
-                                this.trataHb.getSdSocket().send(p);
+                                for(ClienteUDP c : this.listaClUDP) {
+                                    if(c.getServerName().equals(_msg.getServerName())) {
+                                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(c.getIp().substring(1, c.getIp().length())), c.getPort());
+                                        this.trataHb.getSdSocket().send(p);
+                                    }
+                                }
 
                                 System.out.println("[INFO] - Enviei MsgListaClientes.");
                             }
@@ -110,32 +120,52 @@ public class ThreadAtendeCliente extends Thread {
 
                         MSGToCliente _msg = (MSGToCliente) msg;
 
-                        for(int i = 0; i < trataHb.getServerList().size(); i++)
-                        {
-                            if(trataHb.getServerList().get(i).getServerName().equals(_msg.getServerName())) {
-                                for (int f = 0; f < trataHb.getServerList().get(i).getClientesOn().size(); i++) {
-                                    if (trataHb.getServerList().get(i).getClientesOn().get(f).equals(_msg.getDestinatario())) {
-                                        _a = trataHb.getServerList().get(i).getClientesOn().get(f).getIp();
-                                        _p = trataHb.getServerList().get(i).getClientesOn().get(f).getPorto();
+                        for (ClienteUDP c : this.listaClUDP) {
+                            if (c.getUsername().equals(_msg.getDestinatario()) && c.getServerName().equals(_msg.getServerName())) {
+                                _a = c.getIp();
+                                _p = c.getPort();
 
-                                        bout = new ByteArrayOutputStream();
-                                        out = new ObjectOutputStream(bout);
+                                bout = new ByteArrayOutputStream();
+                                out = new ObjectOutputStream(bout);
 
-                                        out.writeObject(_msg);
-                                        out.flush();
+                                out.writeObject(_msg);
+                                out.flush();
 
-                                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(_a), _p);
-                                        this.trataHb.getSdSocket().send(p);
+                                DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(_a.substring(1, _a.length())), _p);
+                                this.trataHb.getSdSocket().send(p);
 
-                                        System.out.println("[INFO] - Enviei MSGToCliente.");
-
-                                        break;
-                                    }
-                                }
+                                System.out.println("[INFO] - Enviei MSGToCliente - " + _msg.getRementente() + ":" + _msg.getDestinatario());
 
                                 break;
                             }
                         }
+//
+//                        for(int i = 0; i < trataHb.getServerList().size(); i++)
+//                        {
+//                            if(trataHb.getServerList().get(i).getServerName().equals(_msg.getServerName())) {
+//                                for (int f = 0; f < trataHb.getServerList().get(i).getClientesOn().size(); f++) {
+//                                    if (trataHb.getServerList().get(i).getClientesOn().get(f).getUsername().equals(_msg.getDestinatario())) {
+//                                        _a = trataHb.getServerList().get(i).getClientesOn().get(f).getIp();
+//                                        _p = trataHb.getServerList().get(i).getClientesOn().get(f).getPorto();
+//
+//                                        bout = new ByteArrayOutputStream();
+//                                        out = new ObjectOutputStream(bout);
+//
+//                                        out.writeObject(_msg);
+//                                        out.flush();
+//
+//                                        DatagramPacket p = new DatagramPacket(bout.toByteArray(), bout.size(), InetAddress.getByName(_a), _p);
+//                                        this.trataHb.getSdSocket().send(p);
+//
+//                                        System.out.println("[INFO] - Enviei MSGToCliente.");
+//
+//                                        break;
+//                                    }
+//                                }
+//
+//                                break;
+//                            }
+//                        }
                     } else if(msg instanceof MsgDirectoryServer) {
 
                         System.out.println("[INFO] - Recebi heartbeat do servidor.");
@@ -150,6 +180,12 @@ public class ThreadAtendeCliente extends Thread {
                             Server newServer = new Server(hb.getServerName(), hb.getClientesOn(), address.toString(), port, hb.getPortTCP());
                             trataHb.addToServerList(newServer);
                             System.out.println("[INFO] - Adicionei servidor a lista.");
+                        } else if(verify(serverList, hb.getServerName())) {
+                            for(int i = 0; i < serverList.size(); i++) {
+                                if(serverList.get(i).getServerName().equals(hb.getServerName())) {
+                                    trataHb.getServerList().get(i).setClientesOn(hb.getClientesOn());
+                                }
+                            }
                         }
                     }
                 } catch (IOException e) {

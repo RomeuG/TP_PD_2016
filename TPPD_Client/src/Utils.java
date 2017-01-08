@@ -8,10 +8,10 @@ import java.net.UnknownHostException;
 
 public class Utils implements InterfaceCli
 {
-     private Socket sock;
-     private String ip;
-     private int port;
-    
+    private Socket sock;
+    private String ip;
+    private int port;
+    private String username;
      
     public Utils(String ip, int port) {
         this.ip = ip;
@@ -24,6 +24,14 @@ public class Utils implements InterfaceCli
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Socket getSock() {
@@ -206,5 +214,38 @@ public class Utils implements InterfaceCli
         }
         
         return false;
+    }
+
+    @Override
+    public DirectoryInfo changeWorkingDirectory(String path) {
+        ObjectInputStream in;
+        ObjectOutputStream out;
+        Object obj;
+        
+        try {
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.writeObject("change_dir:"+path);
+            out.flush();
+            
+            in = new ObjectInputStream(sock.getInputStream());
+            obj = in.readObject();
+            
+            if(obj instanceof DirectoryInfo) {
+                DirectoryInfo dir = (DirectoryInfo) obj;
+            
+                return dir;
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        
+        return null;
+    }
+
+    @Override
+    public void getWorkingDirContent() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

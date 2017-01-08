@@ -115,14 +115,14 @@ public class RegistarScreen extends javax.swing.JDialog {
 
         okButton.setText("OK");
         okButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
         cancelButton.setText("Cancel");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
@@ -134,7 +134,7 @@ public class RegistarScreen extends javax.swing.JDialog {
         jLabel3.setText("Confirmar password");
 
         jUsername.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jUsernameActionPerformed(evt);
             }
         });
@@ -194,7 +194,10 @@ public class RegistarScreen extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void okButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
+        System.out.println("Addr: "+srv.getAddress());
+        System.out.println("Port: "+srv.getPortTCP());
+        
         u = new Utils(srv.getAddress(), srv.getPortTCP());
         if (jPass1.getText().equals(jPass2.getText())) {
             if (u.register(jUsername.getText(), jPass1.getText()))
@@ -207,7 +210,7 @@ public class RegistarScreen extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Dados inválidos.");
     }//GEN-LAST:event_okButtonActionPerformed
 
-    private void cancelButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
         doClose(RET_CANCEL);
     }//GEN-LAST:event_cancelButtonActionPerformed
 
@@ -218,7 +221,7 @@ public class RegistarScreen extends javax.swing.JDialog {
         doClose(RET_CANCEL);
     }//GEN-LAST:event_closeDialog
 
-    private void jUsernameActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jUsernameActionPerformed
+    private void jUsernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jUsernameActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jUsernameActionPerformed
     

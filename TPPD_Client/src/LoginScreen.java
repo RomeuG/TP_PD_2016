@@ -19,7 +19,6 @@ public class LoginScreen extends javax.swing.JDialog {
         
         ip = srv.getAddress();
         porto = srv.getPortTCP();
-        System.out.println("PortTCP: " + porto);
     }
     
     public Utils showDialog() {
@@ -126,6 +125,7 @@ public class LoginScreen extends javax.swing.JDialog {
         
         if (u.login(username, password) == true)
         {
+            u.setUsername(username);
             JOptionPane.showMessageDialog(this, "Login efetuado.");
             
             this.setVisible(false);
